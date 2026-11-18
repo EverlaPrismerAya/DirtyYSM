@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.event.ModScreenEvent;
 import net.minecraft.client.gui.screens.Screen;
@@ -17,6 +19,9 @@ public final class ModScreenForgeHook {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onProcessIMC(InterModProcessEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (!YesSteveModel.isAvailable()) {
             return;
         }

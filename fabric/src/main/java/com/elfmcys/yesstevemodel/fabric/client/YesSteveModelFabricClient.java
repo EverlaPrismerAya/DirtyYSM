@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.fabric.client;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.client.ClientModelManager;
 import com.elfmcys.yesstevemodel.client.renderer.AnimationDebugOverlay;
 import com.elfmcys.yesstevemodel.client.renderer.ExtraPlayerOverlay;
@@ -12,6 +14,9 @@ import net.everla.dirtyYsm.api.client.HudOverlay;
 public final class YesSteveModelFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         HudOverlay debugOverlay = AnimationDebugOverlay.createOverlay();
         HudOverlay loadingOverlay = new ExtraPlayerOverlay();
         HudOverlay syncOverlay = new ModelSyncStateOverlay();

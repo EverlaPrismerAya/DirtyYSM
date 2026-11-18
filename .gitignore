@@ -115,3 +115,5 @@ tools/
 *.log
 .env
 .env.*
+/scripts/
+/docs/

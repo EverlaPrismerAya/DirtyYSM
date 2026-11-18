@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.event.ReplacePlayerHandRenderEvent;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,6 +17,9 @@ public final class ReplacePlayerHandRenderForgeHook {
 
     @SubscribeEvent
     public static void onRenderArm(RenderArmEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (ReplacePlayerHandRenderEvent.onRenderArm(event.getPlayer(), event.getArm(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight())) {
             event.setCanceled(true);
         }

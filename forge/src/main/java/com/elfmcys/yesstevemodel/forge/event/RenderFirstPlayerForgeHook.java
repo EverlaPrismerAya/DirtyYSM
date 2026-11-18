@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.event.RenderFirstPlayerBackground;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,6 +18,9 @@ public final class RenderFirstPlayerForgeHook {
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS) {
             RenderFirstPlayerBackground.resetFrame();
         }
@@ -23,6 +28,9 @@ public final class RenderFirstPlayerForgeHook {
 
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         RenderFirstPlayerBackground.onRenderHand(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
     }
 }

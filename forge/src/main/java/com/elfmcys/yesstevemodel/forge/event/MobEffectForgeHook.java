@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.event.MobEffectEvent;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -17,6 +19,9 @@ public final class MobEffectForgeHook {
 
     @SubscribeEvent
     public static void onEffectAdded(Added event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         MobEffectInstance instance = event.getEffectInstance();
         if (instance != null) {
             MobEffectEvent.onEffectAdded(event.getEntity(), instance.getEffect(), instance.getAmplifier());
@@ -25,11 +30,17 @@ public final class MobEffectForgeHook {
 
     @SubscribeEvent
     public static void onEffectRemoved(Remove event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         MobEffectEvent.onEffectRemoved(event.getEntity(), event.getEffect());
     }
 
     @SubscribeEvent
     public static void onEffectExpired(Expired event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         MobEffectInstance instance = event.getEffectInstance();
         if (instance != null) {
             MobEffectEvent.onEffectRemoved(event.getEntity(), instance.getEffect());

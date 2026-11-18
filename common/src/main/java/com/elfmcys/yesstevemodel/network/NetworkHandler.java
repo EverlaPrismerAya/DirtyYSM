@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.network;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.ClientModelManager;
 import com.elfmcys.yesstevemodel.mixin.ConnectionAccessor;
@@ -58,10 +60,16 @@ public final class NetworkHandler {
     }
 
     public static boolean isPlayerConnected(ServerPlayer serverPlayer) {
+        if (RuntimePolicy.isDisabled()) {
+            return false;
+        }
         return serverPlayer.connection != null && isConnectionValid(((ServerCommonPacketListenerImplAccessor) serverPlayer.connection).ysm$getConnection());
     }
 
     public static boolean isClientConnected() {
+        if (RuntimePolicy.isDisabled()) {
+            return false;
+        }
         if (clientHandshakeComplete) {
             return true;
         }
@@ -73,10 +81,16 @@ public final class NetworkHandler {
     }
 
     public static boolean isConnectionValid(@Nullable Connection connection) {
+        if (RuntimePolicy.isDisabled()) {
+            return false;
+        }
         return connection != null && ((ConnectionAccessor) connection).ysm$getChannel() != null && VERSION.equals(((ConnectionAccessor) connection).ysm$getChannel().attr(CHANNEL_VERSION_KEY).get());
     }
 
     public static void init() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         YSMChannel.init(CHANNEL_ID, VERSION);
         YSMChannel.register(1, S2CModelSyncPayload.class, S2CModelSyncPayload::encode, S2CModelSyncPayload::decode, S2CModelSyncPayload::handle, PacketDirection.PLAY_TO_CLIENT);
         YSMChannel.register(2, C2SModelSyncPayload.class, C2SModelSyncPayload::encode, C2SModelSyncPayload::decode, C2SModelSyncPayload::handle, PacketDirection.PLAY_TO_SERVER);

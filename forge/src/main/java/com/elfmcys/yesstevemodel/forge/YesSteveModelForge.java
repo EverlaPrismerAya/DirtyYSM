@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.capability.AuthModelsCapability;
 import com.elfmcys.yesstevemodel.capability.ModelInfoCapability;
@@ -21,6 +23,9 @@ import net.everla.dirtyYsm.api.PlatformAPI;
 public final class YesSteveModelForge {
 
     public YesSteveModelForge() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         EventBuses.registerModEventBus(YesSteveModel.MOD_ID, modBus);
         modBus.addListener(YesSteveModelForge::onRegisterCapabilities);

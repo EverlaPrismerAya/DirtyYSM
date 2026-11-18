@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.client.compat.top;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
@@ -9,6 +11,9 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 public final class TheOneProbeCompatEvent {
     @SubscribeEvent
     public static void onInterModEnqueue(InterModEnqueueEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         InterModComms.sendTo("theoneprobe", "getTheOneProbe", () -> {
             return new TheOneProbeEntityProvider();
         });

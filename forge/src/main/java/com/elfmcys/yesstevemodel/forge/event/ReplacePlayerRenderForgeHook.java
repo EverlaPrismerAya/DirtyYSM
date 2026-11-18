@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.event.ReplacePlayerRenderEvent;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,6 +17,9 @@ public final class ReplacePlayerRenderForgeHook {
 
     @SubscribeEvent
     public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (ReplacePlayerRenderEvent.onRenderPlayerPre(event.getEntity(), event.getPartialTick(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight())) {
             event.setCanceled(true);
         }

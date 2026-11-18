@@ -21,7 +21,7 @@ public class MixinTweaker implements IMixinConfigPlugin {
 
     @Keep
     public boolean shouldApplyMixin(String str, String str2) {
-        return true;
+        return !com.elfmcys.yesstevemodel.RuntimePolicy.isDisabled();
     }
 
     @Keep

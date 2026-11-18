@@ -33,6 +33,9 @@ public class YesSteveModel {
     }
 
     public static void init() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         LOGGER.info("Initializing YesSteveModel, platform: " + PlatformAPI.getPlatformName());
         try {
             NativeLibLoader.init();
@@ -66,7 +69,7 @@ public class YesSteveModel {
 
     @Keep
     public static boolean isAvailable() {
-        return NativeLibLoader.isAvailable();
+        return !RuntimePolicy.isDisabled() && NativeLibLoader.isAvailable();
     }
 
     public static boolean isOnAndroid() {
@@ -75,6 +78,9 @@ public class YesSteveModel {
 
     @Environment(EnvType.CLIENT)
     public static void sendUnavailableMessage() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         LocalPlayer localPlayer = Minecraft.getInstance().player;
         if (localPlayer != null) {
             localPlayer.sendSystemMessage(getUnavailableComponent());

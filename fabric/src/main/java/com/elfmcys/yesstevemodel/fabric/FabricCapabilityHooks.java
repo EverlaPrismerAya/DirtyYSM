@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.fabric;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.capability.ProjectileModelCapability;
 import com.elfmcys.yesstevemodel.capability.VehicleModelCapability;
@@ -18,6 +20,9 @@ public final class FabricCapabilityHooks {
     }
 
     public static void register() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         EntityTrackingEvents.START_TRACKING.register(FabricCapabilityHooks::onStartTracking);
     }
 

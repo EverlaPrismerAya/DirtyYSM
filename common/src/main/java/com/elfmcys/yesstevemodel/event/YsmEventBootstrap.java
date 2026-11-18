@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.client.event.*;
 import com.elfmcys.yesstevemodel.client.input.*;
 import com.elfmcys.yesstevemodel.client.renderer.RendererManager;
@@ -11,6 +13,9 @@ public final class YsmEventBootstrap {
     }
 
     public static void register() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         ServerStartupEvent.register();
         EnterServerEvent.register();
         PlayerLogoutEvent.register();

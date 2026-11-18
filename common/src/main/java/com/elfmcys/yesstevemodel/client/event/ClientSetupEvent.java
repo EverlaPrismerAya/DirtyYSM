@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.client.event;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.animation.AnimationRegister;
 import com.elfmcys.yesstevemodel.client.input.AnimationRouletteKey;
@@ -21,6 +23,9 @@ public final class ClientSetupEvent {
     }
 
     public static void register() {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         registerKeyMappings();
         if (YesSteveModel.isAvailable()) {
             AnimationRegister.registerAnimationState();

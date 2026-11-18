@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.ClientModelManager;
 import com.elfmcys.yesstevemodel.client.compat.acceleratedrendering.AcceleratedRenderingCompat;
@@ -52,6 +54,9 @@ public final class ForgeClientSetupHooks {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (!YesSteveModel.isAvailable()) {
             return;
         }
@@ -90,6 +95,9 @@ public final class ForgeClientSetupHooks {
 
     @SubscribeEvent
     public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (!YesSteveModel.isAvailable()) {
             return;
         }

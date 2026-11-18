@@ -1,6 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
+  "plugin": "com.elfmcys.yesstevemodel.mixin.plugin.MixinTweaker",
   "package": "com.elfmcys.yesstevemodel.forge.mixin",
   "compatibilityLevel": "JAVA_17",
   "injectors": {

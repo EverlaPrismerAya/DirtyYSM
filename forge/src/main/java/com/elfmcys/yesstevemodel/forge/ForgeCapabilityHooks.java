@@ -1,5 +1,7 @@
 package com.elfmcys.yesstevemodel.forge;
 
+import com.elfmcys.yesstevemodel.RuntimePolicy;
+
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.forge.capability.AuthModelsCapabilityProvider;
 import com.elfmcys.yesstevemodel.forge.capability.ModelInfoCapabilityProvider;
@@ -47,6 +49,9 @@ public final class ForgeCapabilityHooks {
 
     @SubscribeEvent
     public static void onAttachCapabilities(AttachCapabilitiesEvent<Entity> event) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (!YesSteveModel.isAvailable()) {
             return;
         }
@@ -86,6 +91,9 @@ public final class ForgeCapabilityHooks {
 
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking startTracking) {
+        if (RuntimePolicy.isDisabled()) {
+            return;
+        }
         if (!YesSteveModel.isAvailable()) {
             return;
         }
