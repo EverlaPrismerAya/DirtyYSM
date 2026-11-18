@@ -5,8 +5,11 @@ DirtyOpenYSM 是一款基于 [Yes Steve Model](https://modrinth.com/mod/yes-stev
 本项目使用可选的C++库实现更快速的渲染，项目位于[OpenYSMDev/openysm.cpp](https://github.com/OpenYSMDev/openysm.cpp)
 
 本项目基于OpenYSM，目标是提供一个在多人模式下优化了网络传输方式，并可以纯客户端模式运行的替代品。
+
 本人不支持，不认可OpenYSM开发组反编译闭源项目并以MIT协议开源的行为。拿着反编译的产物作为把柄要挟别人，这并非开源精神，而是绝对可耻的，对开源精神的亵渎。
+
 本人始终尊重YSM模组开发团队及其社区的模型作者的劳动成果。没有他们的劳动就没有YSM如今的辉煌。
+
 此项目诞生的原因仅仅是我受不了YSM没有官方支持的纯客户端模式与模型下载传输优化。
 
 DirtyYSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语言。
