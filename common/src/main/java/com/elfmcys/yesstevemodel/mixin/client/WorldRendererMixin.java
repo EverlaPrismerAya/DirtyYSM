@@ -8,6 +8,8 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.entity.Entity;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,6 +18,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin({LevelRenderer.class})
 public class WorldRendererMixin {
+    // Iris/Oculus calls renderEntity with a sun-view PoseStack during its shadow pass.
+    // Capture that pass's view before the dispatcher adds the entity/model transforms;
+    // the outer renderLevel scope still contains the main camera view at that point.
+    @Inject(method = "renderEntity", at = @At("HEAD"))
+    private void ysmPhys$beginEntity(Entity entity, double cameraX, double cameraY, double cameraZ, float partialTick,
+                                     PoseStack poseStack, MultiBufferSource buffers, CallbackInfo ci) {
+        net.everla.ysmPhysLib.WorldPhysicsContext.begin(poseStack.last().pose());
+    }
+
+    @Inject(method = "renderEntity", at = @At("RETURN"))
+    private void ysmPhys$endEntity(Entity entity, double cameraX, double cameraY, double cameraZ, float partialTick,
+                                   PoseStack poseStack, MultiBufferSource buffers, CallbackInfo ci) {
+        net.everla.ysmPhysLib.WorldPhysicsContext.end();
+    }
+
     @Inject(method = "renderLevel", at = @At("HEAD"))
     private void ysmPhys$begin(PoseStack poseStack, float partialTick, long finishNanoTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
         net.everla.ysmPhysLib.WorldPhysicsContext.begin(poseStack.last().pose());

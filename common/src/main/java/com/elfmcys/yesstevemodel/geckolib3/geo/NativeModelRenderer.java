@@ -34,7 +34,6 @@ public class NativeModelRenderer {
     }
 
     public static void renderMesh(VertexConsumer buffer, PoseStack.Pose pose, GeoModel model, float[] boneParams, float[] stateBuffer, int textureIndex, int renderPartMask, int packedLight, int packedOverlay, float red, float green, float blue, float alpha, net.minecraft.resources.ResourceLocation textureLocation) {
-        boneParams = net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model, boneParams);
         OculusCompat.updatePBRState();
         RenderSystem.getProjectionMatrix().mul(RenderSystem.getModelViewMatrix(), projectionModelViewMatrix);
         boolean isPreview = ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer();
@@ -47,11 +46,12 @@ public class NativeModelRenderer {
             {
                 ChatLogger.INSTANCE.logFormatted("Disabled GPU renderer for: " + GpuCapability.getReason());
                 com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).set(false);
-                return;
+                net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
             }
 
             if (OculusCompat.isShaderPackInUse() && !isPreview) {
-                if (IrisRenderPath.tryRender(model, pose, boneParams, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
+                net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
+                if (IrisRenderPath.tryRender(model, pose, net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model,boneParams), renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
                     return;
                 }
             } else {
@@ -61,6 +61,8 @@ public class NativeModelRenderer {
             }
         }
 
+        net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
+        boneParams=net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model,boneParams);
         if (NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()) { // WIP: SIMD MODEL RENDER
             nativeRenderModel(
                     buffer,

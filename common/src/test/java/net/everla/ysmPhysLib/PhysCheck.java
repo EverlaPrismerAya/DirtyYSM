@@ -14,8 +14,42 @@ import java.util.List;
 public final class PhysCheck {
     private static final Object WORLD=new Object();
     public static void main(String[] args) throws Exception {
-        parser(); airDrag(); topology(); rotations(); collision(); simulation(); cadence(); bodyCollision(); context(); example(); actualModel(); benchmark();
+        parser(); movingContacts(); hybridPartition(); airDrag(); topology(); rotations(); collision(); simulation(); cadence(); bodyCollision(); blockCollision(); context(); example(); actualModel(); benchmark();
         System.out.println("PASS: ysmPhys parser, topology, rigid branches, convex contacts, fixed steps, lifecycle, UI gate and isolation");
+    }
+
+    private static void movingContacts() {
+        var collider=new PhysCollider(cube(),new Matrix4f());
+        // The former world-velocity call spuriously stopped a comoving falling tip.
+        var oldTipVelocity=new Vector3f(4,-8,0);
+        collider.resolveSegment(new Vector3f(0,1,0),new Vector3f(.2f,.45f,0),new Vector3f(oldTipVelocity),oldTipVelocity,.0625f,true);
+        assert oldTipVelocity.y>-7 : "fixture no longer reproduces the old artificial rebound";
+        for(float speed:new float[]{-8,-2,2,8}) for(boolean fixed:new boolean[]{false,true}) {
+            Vector3f frame=new Vector3f(4,speed,0),va=new Vector3f(frame),vb=new Vector3f(frame);
+            PhysSimulation.resolveContact(collider,new Vector3f(0,1,0),new Vector3f(.2f,.45f,0),va,vb,.0625f,fixed,frame);
+            assert va.distance(frame)<1e-5 && vb.distance(frame)<1e-5 : "comoving body contact injected rebound: "+vb;
+        }
+        var floor=new PhysCollider(new net.minecraft.world.phys.AABB(-2,-1,-2,2,0,2));
+        var va=new Vector3f(0,-4,0);var vb=new Vector3f(0,-4,0);
+        PhysSimulation.resolveContact(floor,new Vector3f(0,1,0),new Vector3f(.2f,.01f,0),va,vb,.0625f,true,new Vector3f(0,-4,0));
+        assert vb.y>=-1e-5 : "world contact incorrectly used moving body frame";
+        System.out.println("PASS: moving body contact preserves comoving velocity; stationary terrain removes inward velocity");
+    }
+
+    private static void hybridPartition() {
+        var m=model(bone("ysmPhys@root",-1,0,0,0),bone("ysmPhys#bc=true@child",0,0,-8,0),
+                bone("ysmPhysEnd@end",1,0,-16,0),bone("ordinary",0,0,0,0),
+                bone("ysmPhys#bc=false@nested",3,8,0,0),bone("ysmPhysEnd@nested",4,16,0,0),
+                bone("ysmPhys@independent",-1,32,0,0),bone("ysmPhysEnd@independent",6,48,0,0));
+        var d=definition(m);boolean[] cpu=d.blockCollisionIslands();
+        assert cpu[0] && cpu[1] && cpu[3] && cpu[4] && !cpu[6] && !cpu[7];
+        assert GpuPhysics.supportsDefinition(d);
+        var sim=new PhysSimulation(d);var pose=parameters(m);sim.partition(pose,true);
+        for(int i=0;i<60;i++) sim.update(pose,new Matrix4f(),i/60.0,false,WORLD,0,0,0);
+        assert pose[6*12]==0 && pose[6*12+1]==0 && pose[6*12+2]==0 : "CPU changed GPU joint";
+        sim.partition(pose,false);
+        for(int i=60;i<120;i++) sim.update(pose,new Matrix4f(),i/60.0,false,WORLD,0,0,0);
+        assert Math.abs(pose[6*12+2])>.01 : "fallback left CPU partition enabled";
     }
 
     private static void parser() {
@@ -23,9 +57,15 @@ public final class PhysCheck {
         var p=PhysParameters.parse("ysmPhys#r=2, g=-3, s=4, a=45, c=1@hair",PhysParameters.DEFAULT);
         var inherited=PhysParameters.parse("ysmPhys#g=0@tip",p);
         assert inherited.r()==2 && inherited.g()==0 && inherited.a()==45;
+        assert !PhysParameters.DEFAULT.bc();
+        var block=PhysParameters.parse("ysmPhys#bc=true@root",PhysParameters.DEFAULT);
+        assert block.bc() && PhysParameters.parse("ysmPhys@child",block).bc();
+        assert !PhysParameters.parse("ysmPhys#bc=false@child",block).bc();
+        assert PhysParameters.parse("ysmPhys#bc = true, c=2@root",PhysParameters.DEFAULT).c()==2;
         for(String invalid:List.of("ysmPhys", "ysmPhys@", "ysmPhys#@hair", "ysmPhys#x=1@hair", "ysmPhys#r=1,r=2@hair",
                 "ysmPhys#r=NaN@hair", "ysmPhys#g=Infinity@hair", "ysmPhys#c=-1@hair", "ysmPhys#air=-1@hair", "ysmPhys#air=NaN@hair", "ysmPhys#a=181@hair",
-                "ysmPhys#r=1,@hair", "ysmPhys@hair@bad")) {
+                "ysmPhys#r=1,@hair", "ysmPhys@hair@bad", "ysmPhys#bc=1@hair", "ysmPhys#bc=0@hair",
+                "ysmPhys#bc=yes@hair", "ysmPhys#bc=@hair", "ysmPhys#bc=true,bc=false@hair")) {
             try {PhysParameters.parse(invalid,p);throw new AssertionError("accepted "+invalid);}
             catch(IllegalArgumentException expected) {}
         }
@@ -45,20 +85,68 @@ public final class PhysCheck {
         assert run(60,12,"g=9.8,s=0,r=0,air=10,a=180").y>run(60,12,"g=9.8,s=0,r=0,air=0,a=180").y : "air has no simulation effect";
     }
 
-    private static GeoBone bone(String name,int parent,float x,float y,float z) {
+    private static void blockCollision() {
+        for(boolean enabled:new boolean[]{false,true}) for(double origin:new double[]{0,10000000.125,-10000000.125}) {
+            var m=model(bone("ysmPhys#bc="+enabled+",s=0,r=3,air=0,a=180@root",-1,0,0,0),bone("ysmPhysEnd@end",0,16,0,0));
+            var d=definition(m);var sim=new PhysSimulation(d);sim.setFrameRate(60);var p=parameters(m);
+            assert GpuPhysics.supportsDefinition(d)!=enabled : "world collision bypassed GPU fallback";
+            var root=new Matrix4f().translate(0,.25f,0);
+            var floor=new net.minecraft.world.phys.AABB(-2,-1,-2,2,0,2);
+            var shape=net.minecraft.world.phys.shapes.Shapes.create(floor.move(origin,64,origin));
+            int[] queries={0};boolean[] removed={false};
+            java.util.function.Function<net.minecraft.world.phys.AABB,Iterable<net.minecraft.world.phys.shapes.VoxelShape>> source=bounds->{
+                queries[0]++;
+                assert Math.abs(bounds.getCenter().x-origin)<4 && Math.abs(bounds.getCenter().z-origin)<4 : "block query not in world coordinates";
+                return removed[0]?List.of():List.of(shape);
+            };
+            for(int frame=0;frame<=180;frame++) sim.update(p,root,frame/60.0,false,WORLD,origin,64,origin,source);
+            Vector3f tip=sim.position(1);
+            if(enabled) {
+                assert queries[0]>0;
+                assert tip.y>=1f/16-.002 : "world floor penetrated: "+tip;
+                assert Math.abs(tip.distance(sim.position(0))-1)<1e-5 : "block contact stretched bone";
+            } else {assert queries[0]==0 : "bc=false queried world";assert tip.y<-.5 : "bc=false hit floor";}
+            int before=queries[0];float[] drawn=p.clone();
+            sim.update(p,root,3,false,WORLD,origin,64,origin,source);
+            assert Arrays.equals(drawn,p) && queries[0]==before : "repeated draw queried/advanced world contacts";
+            sim.update(p,root,3.1,true,WORLD,origin,64,origin,source);
+            assert queries[0]==before : "paused physics queried blocks";
+            removed[0]=true;
+            for(int frame=187;frame<=300;frame++) sim.update(p,root,frame/60.0,false,WORLD,origin,64,origin,source);
+            assert sim.position(1).y<-.5 : "removed world block retained cached collision";
+        }
+        // VoxelShape components stay separate: a lower slab must not become a full block.
+        var lower=new PhysCollider(new net.minecraft.world.phys.AABB(0,0,0,1,.5,1));
+        Vector3f point=new Vector3f(.5f,.75f,.5f);
+        assert !lower.resolve(point,new Vector3f(),.05f) : "slab expanded to full block";
+        point.set(.5f,.49f,.5f);assert lower.resolve(point,new Vector3f(),.05f) && point.y>.549f;
+        // Whole-segment contact, with endpoints outside the block's X extent.
+        var wall=new PhysCollider(new net.minecraft.world.phys.AABB(-.1,-.5,-.5,.1,.5,.5));
+        Vector3f a=new Vector3f(-1,0,0), b=new Vector3f(1,0,0);
+        assert wall.resolveSegment(a,b,new Vector3f(),new Vector3f(),.0625f,true) : "world block missed segment midpoint";
+        var mixed=model(bone("ysmPhys#bc=true,s=0,r=3,air=0,a=180@enabled",-1,0,0,0),bone("ysmPhysEnd@enabled",0,16,0,0),
+                bone("ysmPhys#bc=false,s=0,r=3,air=0,a=180@disabled",-1,32,0,0),bone("ysmPhysEnd@disabled",2,48,0,0));
+        var mixedSimulation=new PhysSimulation(definition(mixed));mixedSimulation.setFrameRate(60);var mixedPose=parameters(mixed);
+        var floorShape=net.minecraft.world.phys.shapes.Shapes.create(new net.minecraft.world.phys.AABB(-2,-1,-2,5,0,2));
+        for(int frame=0;frame<=180;frame++) mixedSimulation.update(mixedPose,new Matrix4f().translate(0,.25f,0),frame/60.0,false,WORLD,0,0,0,bounds->List.of(floorShape));
+        assert mixedSimulation.position(1).y>=1f/16-.002 && mixedSimulation.position(3).y<-.5 : "bc leaked into a disabled branch";
+        System.out.println("PASS: bc inheritance/default/validation, world floor, slab, whole segment, far-origin rebasing, removal, pause and GPU fallback");
+    }
+
+    static GeoBone bone(String name,int parent,float x,float y,float z) {
         var b=new GeoBone(name,false,false,false,x,y,z,0,0,0);b.parentIdx=parent;return b;
     }
-    private static GeoModel model(GeoBone... bones) {
+    static GeoModel model(GeoBone... bones) {
         String[][] names=new String[35][];Arrays.setAll(names,i->new String[0]);
         var model=new GeoModel(bones,names,new boolean[3],new GeometryDescription("physics_check",16,16,4,4,new double[3]),new boolean[1]);
         model.bakedBones=new ArrayList<>();
         for(var b:bones) {var baked=new GeoModel.BakedBone();baked.name=b.getName();baked.parentIdx=b.parentIdx;model.bakedBones.add(baked);}
         return model;
     }
-    private static PhysDefinition definition(GeoModel m) {
+    static PhysDefinition definition(GeoModel m) {
         return new PhysDefinition(m,message->{throw new AssertionError(message);});
     }
-    private static float[] parameters(GeoModel model) {return model.boneTransformData.clone();}
+    static float[] parameters(GeoModel model) {return model.boneTransformData.clone();}
 
     private static void topology() {
         var m=model(bone("ysmPhys#r=3@root",-1,0,0,0),bone("ysmPhys@child",0,0,-8,0),bone("ysmPhysEnd@end",1,0,-16,0));
@@ -102,7 +190,7 @@ public final class PhysCheck {
     }
 
     /** Cube [-.5,.5], with deliberately mixed face winding. */
-    private static float[] cube() {
+    static float[] cube() {
         return new float[]{-.5f,-.5f,-.5f, -.5f,.5f,-.5f, .5f,.5f,-.5f, .5f,-.5f,-.5f,
                 -.5f,-.5f,.5f, -.5f,.5f,.5f, .5f,.5f,.5f, .5f,-.5f,.5f,
                 -.5f,-.5f,-.5f, -.5f,-.5f,.5f, -.5f,.5f,.5f, -.5f,.5f,-.5f,
@@ -324,6 +412,11 @@ public final class PhysCheck {
         assert !WorldPhysicsContext.allows(false,false) : "nonplayer simulated";
         var model=new Matrix4f().translate(2,3,4).rotateZ(.2f);
         assert WorldPhysicsContext.modelToWorld(new Matrix4f(view).mul(model)).equals(model,1e-5f) : "camera entered physics";
+        Matrix4f shadowView=new Matrix4f().rotateX(1.2f).rotateY(-.7f).translate(0,0,-12);
+        WorldPhysicsContext.begin(shadowView);
+        assert WorldPhysicsContext.modelToWorld(new Matrix4f(shadowView).mul(model)).equals(model,1e-5f) : "shadow camera entered physics";
+        WorldPhysicsContext.end();
+        assert WorldPhysicsContext.modelToWorld(new Matrix4f(view).mul(model)).equals(model,1e-5f) : "shadow pass corrupted main view";
         WorldPhysicsContext.end();assert !WorldPhysicsContext.allows(true,false);
     }
 

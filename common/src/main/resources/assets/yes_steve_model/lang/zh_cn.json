@@ -529,6 +529,8 @@
   "gui.yes_steve_model.config.group.physics_groups": "物理组",
   "gui.yes_steve_model.config.physics_enabled": "启用物理组",
   "gui.yes_steve_model.config.physics_enabled.desc": "仅对世界内玩家的物理组生效，包括其他玩家；不影响物品栏和模型选择界面。",
+  "gui.yes_steve_model.config.physics_experimental_gpu": "实验性GPU加速",
+  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "默认关闭。尝试使用显卡计算世界玩家的骨骼物理；带身体碰撞块的模型、不支持的显卡、光影和依赖物理姿态的附件或查询会回退CPU。少量物理组不保证更快。下方显示最近一次后端状态。",
   "gui.yes_steve_model.config.physics_fps": "物理模拟帧率",
   "gui.yes_steve_model.config.physics_fps.desc": "每秒物理解算次数，整数 0–120，默认 60。0 表示禁用模拟并使用原动画。较低帧率会降低精度，可能出现明显跳动。"
 }

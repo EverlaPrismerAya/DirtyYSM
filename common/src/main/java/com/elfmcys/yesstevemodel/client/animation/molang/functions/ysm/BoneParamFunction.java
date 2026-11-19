@@ -24,6 +24,8 @@ public abstract class BoneParamFunction extends EntityFunction {
         if (name == StringPool.EMPTY_ID || (bone = context.entity().geoInstance().getBone(name)) == null) {
             return null;
         }
+        // Bone structs can survive across frames; register the CPU dependency at lookup time.
+        bone.setTrackXform(true);
         return getParam(bone);
     }
 }

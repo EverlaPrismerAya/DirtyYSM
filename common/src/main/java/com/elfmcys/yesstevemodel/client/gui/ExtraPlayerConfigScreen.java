@@ -86,6 +86,13 @@ public class ExtraPlayerConfigScreen extends OptionScreen {
         groups.add(new OptionGroup("physics_groups")
                 .add(new BooleanOptionRow(0,0,0,22,Option.ofBoolean("physics_enabled",
                         com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(net.everla.ysmPhysLib.PhysConfig.ENABLED))))
+                .add(new BooleanOptionRow(0,0,0,22,new Option<Boolean>("physics_experimental_gpu",
+                        ()->com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(net.everla.ysmPhysLib.PhysConfig.EXPERIMENTAL_GPU).get(),
+                        value->com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(net.everla.ysmPhysLib.PhysConfig.EXPERIMENTAL_GPU).set(value)) {
+                    @Override public Component getDescription() {
+                        return super.getDescription().copy().append(Component.literal("\n"+net.everla.ysmPhysLib.GpuPhysics.getLastReason()));
+                    }
+                }))
                 .add(new SliderOptionRow(0,0,0,22,new Option<Double>("physics_fps",()->physicsFps.get().doubleValue(),
                         value->physicsFps.set((int)Math.round(value))),0,120,1," FPS")));
         groups.add(misc);

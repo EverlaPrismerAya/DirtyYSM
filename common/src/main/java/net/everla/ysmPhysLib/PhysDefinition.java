@@ -18,6 +18,7 @@ public final class PhysDefinition {
     public final List<GeoBone> bones;
     public final int[] order;
     public final Joint[] jointByBone;
+    public final boolean[] affected;
 
     public PhysDefinition(GeoModel model, Consumer<String> warning) {
         List<Joint> joints=new ArrayList<>();
@@ -79,12 +80,37 @@ public final class PhysDefinition {
         order=java.util.stream.IntStream.range(0,size).boxed().sorted(java.util.Comparator.comparingInt(this::depth)).mapToInt(Integer::intValue).toArray();
         jointByBone=new Joint[size];
         for(Joint joint:joints) jointByBone[joint.bone]=joint;
+        affected=new boolean[size];
+        for(int i:order) {
+            int parent=bones.get(i).parentIdx;
+            affected[i]=jointByBone[i]!=null || parent>=0 && affected[parent];
+        }
         ends=endList.stream().mapToInt(Integer::intValue).toArray();
         if(!joints.isEmpty() && model.bakedBones!=null) for(int i=0;i<size;i++) if(!excluded[i] && PhysParameters.isCollider(bones.get(i).getName())) {
             for(float[] faces:model.bakedBones.get(i).physicsFaces) cubes.add(new Cube(i,faces));
         }
         this.joints=List.copyOf(joints);
         this.cubes=List.copyOf(cubes);
+    }
+
+    /** Physical ancestors and ordinary descendants form an indivisible dependency island. */
+    int[] islands() {
+        int[] islands=new int[bones.size()];java.util.Arrays.fill(islands,-1);
+        int count=0;
+        for(int i:order) {
+            int parent=bones.get(i).parentIdx;
+            if(parent>=0) islands[i]=islands[parent];
+            if(jointByBone[i]!=null && islands[i]<0) islands[i]=count++;
+        }
+        return islands;
+    }
+
+    boolean[] blockCollisionIslands() {
+        int[] islands=islands();
+        boolean[] blocked=new boolean[bones.size()],result=new boolean[bones.size()];
+        for(var joint:joints) if(joint.parameters().bc()) blocked[islands[joint.bone()]]=true;
+        for(int i:order) result[i]=islands[i]>=0 && blocked[islands[i]];
+        return result;
     }
 
     private int depth(int i) {

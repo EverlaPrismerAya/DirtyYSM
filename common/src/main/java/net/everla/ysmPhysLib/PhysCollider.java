@@ -10,6 +10,34 @@ public final class PhysCollider {
     private record Face(Vector3f a, Vector3f b, Vector3f c, Vector3f d, Vector3f normal) {}
     private final List<Face> faces=new ArrayList<>();
     private final Vector3f min=new Vector3f(Float.POSITIVE_INFINITY), max=new Vector3f(Float.NEGATIVE_INFINITY);
+    final boolean worldBlock;
+
+    /** World VoxelShape box, already rebased in double precision near the player. */
+    public PhysCollider(net.minecraft.world.phys.AABB box) {
+        worldBlock=true;
+        min.set((float)box.minX,(float)box.minY,(float)box.minZ);
+        max.set((float)box.maxX,(float)box.maxY,(float)box.maxZ);
+        Vector3f a=new Vector3f(min.x,min.y,min.z), b=new Vector3f(max.x,min.y,min.z),
+                c=new Vector3f(max.x,max.y,min.z), d=new Vector3f(min.x,max.y,min.z),
+                e=new Vector3f(min.x,min.y,max.z), f=new Vector3f(max.x,min.y,max.z),
+                g=new Vector3f(max.x,max.y,max.z), h=new Vector3f(min.x,max.y,max.z);
+        faces.add(new Face(a,b,c,d,new Vector3f(0,0,-1)));
+        faces.add(new Face(e,f,g,h,new Vector3f(0,0,1)));
+        faces.add(new Face(a,d,h,e,new Vector3f(-1,0,0)));
+        faces.add(new Face(b,c,g,f,new Vector3f(1,0,0)));
+        faces.add(new Face(a,b,f,e,new Vector3f(0,-1,0)));
+        faces.add(new Face(d,c,g,h,new Vector3f(0,1,0)));
+    }
+
+    /** std430 Collider: bounds, face count, six complete quads (no geometry truncation). */
+    void writeGpu(java.nio.ByteBuffer out) {
+        if(faces.size()>6) throw new IllegalArgumentException("GPU collider has more than six faces");
+        int start=out.position();
+        put(out,min);put(out,max);out.putInt(faces.size()).putInt(0).putInt(0).putInt(0);
+        for(Face f:faces) {put(out,f.a);put(out,f.b);put(out,f.c);put(out,f.d);put(out,f.normal);}
+        out.position(start+GpuPhysKernel.COLLIDER_BYTES);
+    }
+    private static void put(java.nio.ByteBuffer out,Vector3f v) {out.putFloat(v.x).putFloat(v.y).putFloat(v.z).putFloat(0);}
 
     /** Capsule/convex contact, with inverse-mass weighted endpoint projection. */
     public boolean resolveSegment(Vector3f start, Vector3f end, Vector3f startVelocity, Vector3f endVelocity,
@@ -155,6 +183,7 @@ public final class PhysCollider {
     }
 
     public PhysCollider(float[] vertices, Matrix4f transform) {
+        worldBlock=false;
         List<Vector3f> points=new ArrayList<>();
         Vector3f center=new Vector3f();
         for(int i=0;i+2<vertices.length;i+=3) {

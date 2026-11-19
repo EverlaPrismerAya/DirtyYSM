@@ -68,8 +68,12 @@ public final class GpuRenderPath {
 
         updatePivotAbsStateBuffer(model, boneParams, stateBuffer);
 
-        GeoModel.nComputeBoneMatrices(mesh.pointer, rootPoseScratch, rootNormalScratch, boneParams, packedLight, boneBuf);
-        updateBoneVisibility(model.bakedBones, boneParams, boneBuf);
+        int physicsBuffer=net.everla.ysmPhysLib.GpuPhysics.render(boneParams,rootPose,packedLight);
+        if(physicsBuffer==0) {
+            boneParams=net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model,boneParams);
+            GeoModel.nComputeBoneMatrices(mesh.pointer, rootPoseScratch, rootNormalScratch, boneParams, packedLight, boneBuf);
+            updateBoneVisibility(model.bakedBones, boneParams, boneBuf);
+        }
         boneBuf.position(0);
         boneBuf.limit(mesh.boneCount * 144);
 
@@ -92,9 +96,10 @@ public final class GpuRenderPath {
         GlStateManager._activeTexture(GL13.GL_TEXTURE0);
         GlStateManager._bindTexture(modelTexId);
 
-        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, mesh.boneSsbo);
-        GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0L, boneBuf);
-        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, BoneSkinShader.ssbo, mesh.boneSsbo);
+        int drawBones=physicsBuffer==0?mesh.boneSsbo:physicsBuffer;
+        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, drawBones);
+        if(physicsBuffer==0) GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0L, boneBuf);
+        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, BoneSkinShader.ssbo, drawBones);
 
         float fogStart = RenderSystem.getShaderFogStart();
         float fogEnd = RenderSystem.getShaderFogEnd();
@@ -167,6 +172,7 @@ public final class GpuRenderPath {
     }
 
     public static void disposeMesh(GeoModel model) {
+        net.everla.ysmPhysLib.GpuPhysics.disposeModel(model);
         if (model.gpuMeshHandle == 0) return;
         GpuMesh mesh = meshMap.remove(model.gpuMeshHandle);
         if (mesh != null) mesh.dispose();

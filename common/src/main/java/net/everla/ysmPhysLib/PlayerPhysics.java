@@ -23,11 +23,13 @@ public final class PlayerPhysics {
                 animatable instanceof IPreviewAnimatable || ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer())
                 && mc.level!=null && animatable.entity.level()==mc.level;
         if(!eligible) {
+            GpuPhysics.deactivate(model.getMatrixData());
             beforeAnimation(model);
             return;
         }
         int fps=PhysConfig.frameRate();
         if(fps==0) {
+            GpuPhysics.deactivate(model.getMatrixData());
             beforeAnimation(model);
             if(model.ysmPhysics!=null) model.ysmPhysics.invalidate();
             return;
@@ -46,8 +48,10 @@ public final class PlayerPhysics {
         var cameraPos=camera.getPosition();
         Matrix4f root=new Matrix4f().translation((float)(cameraPos.x-x),(float)(cameraPos.y-y),(float)(cameraPos.z-z))
                 .mul(WorldPhysicsContext.modelToWorld(renderPose));
+        if(GpuPhysics.prepare(model,root,(player.tickCount+partialTick)/20.0,mc.isPaused(),player.level(),x,y,z,fps,
+                animatable.getTextureLocation()!=null,bounds->player.level().getBlockCollisions(player,bounds))) return;
         model.ysmPhysics.update(model.getMatrixData(),root,(player.tickCount+partialTick)/20.0,mc.isPaused(),
-                player.level(),x,y,z);
+                player.level(),x,y,z,bounds->player.level().getBlockCollisions(player,bounds));
     }
 
     public static float[] hideEndpoints(com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel model, float[] parameters) {
