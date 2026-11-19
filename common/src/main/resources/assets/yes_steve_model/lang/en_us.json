@@ -530,7 +530,7 @@
   "gui.yes_steve_model.config.physics_enabled": "Enable physics groups",
   "gui.yes_steve_model.config.physics_enabled.desc": "Simulate world players, including other players. Inventory and model selection previews are excluded.",
   "gui.yes_steve_model.config.physics_experimental_gpu": "Experimental GPU acceleration",
-  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "Off by default. Try GPU bone physics for world players. Models with body colliders, unsupported GPUs, shader packs and attachments or queries requiring physical poses use CPU physics. Small workloads may be slower. The most recent backend status is shown below.",
+  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "An early experimental feature; functionality is not guaranteed.",
   "gui.yes_steve_model.config.physics_fps": "Physics simulation frame rate",
   "gui.yes_steve_model.config.physics_fps.desc": "Physics steps per second, integer 0–120; default 60. 0 disables simulation and restores animation. Lower rates reduce accuracy and can cause visible stepping."
 }
