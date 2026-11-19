@@ -80,6 +80,7 @@ public class GeneralConfig {
         defineGeneral(builder);
         ExtraPlayerRenderConfig.define(builder);
         LoadingStateConfig.define(builder);
+        net.everla.ysmPhysLib.PhysConfig.define(builder,false);
         return builder.build();
     }
 

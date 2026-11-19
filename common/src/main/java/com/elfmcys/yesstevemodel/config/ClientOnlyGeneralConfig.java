@@ -60,6 +60,7 @@ public static boolean effectiveModernRoulette() {
         defineGeneral(builder);
         ClientOnlyRenderConfig.define(builder);
         ClientOnlyLoadingConfig.define(builder);
+        net.everla.ysmPhysLib.PhysConfig.define(builder,true);
         return builder.build();
     }
 

@@ -26,9 +26,16 @@ public final class PlayerPhysics {
             beforeAnimation(model);
             return;
         }
+        int fps=PhysConfig.frameRate();
+        if(fps==0) {
+            beforeAnimation(model);
+            if(model.ysmPhysics!=null) model.ysmPhysics.invalidate();
+            return;
+        }
         var definition=model.getGeoModel().ysmPhysics;
         if(definition==null || definition.joints.isEmpty()) return;
         if(model.ysmPhysics==null) model.ysmPhysics=new PhysSimulation(definition);
+        model.ysmPhysics.setFrameRate(fps);
         Player player=(Player)animatable.entity;
         double x=Mth.lerp(partialTick,player.xo,player.getX());
         double y=Mth.lerp(partialTick,player.yo,player.getY());

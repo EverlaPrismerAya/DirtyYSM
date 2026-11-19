@@ -11,6 +11,8 @@ import java.util.List;
 public final class PhysSimulation {
     private static final double STEP_SECONDS=1.0/120;
     public static final float STEP=(float)STEP_SECONDS;
+    private double stepSeconds=STEP_SECONDS;
+    private float stepDuration=STEP;
     private final PhysDefinition definition;
     private final Vector3f[] positions, velocities, targets;
     private final Quaternionf[] rotations;
@@ -39,6 +41,16 @@ public final class PhysSimulation {
     }
 
     public void invalidate() {initialized=false;lastTime=Double.NaN;accumulator=0;}
+
+    /** Changing cadence starts from the current animation, without old-step debt. */
+    public void setFrameRate(int fps) {
+        if(fps<1 || fps>120) throw new IllegalArgumentException("Physics FPS must be 1..120");
+        double duration=1.0/fps;
+        if(duration!=stepSeconds) {
+            stepSeconds=duration;stepDuration=(float)duration;
+            invalidate();
+        }
+    }
 
     public void update(float[] parameters, Matrix4f root, double time, boolean paused, Object currentWorld,
                        double x, double y, double z) {
@@ -73,8 +85,8 @@ public final class PhysSimulation {
             colliders.clear();
             boolean[] visible=visibility(base);
             for(var cube:definition.cubes) if(visible[cube.bone()]) colliders.add(new PhysCollider(cube.faces(),matrices[cube.bone()]));
-            accumulator=Math.min(accumulator+elapsed,STEP_SECONDS*8.0);
-            for(int step=0;step<8 && accumulator+1e-9>=STEP_SECONDS;step++) {
+            accumulator=Math.min(accumulator+elapsed,stepSeconds*8.0);
+            for(int step=0;step<8 && accumulator+1e-9>=stepSeconds;step++) {
                 integrate();
                 for(int iteration=0;iteration<8;iteration++) {
                     constrain();
@@ -83,7 +95,7 @@ public final class PhysSimulation {
                 // Positions and velocities are projected separately. Geometric
                 // correction must never be converted into an outward impulse.
                 constrain();
-                accumulator-=STEP_SECONDS;
+                accumulator-=stepSeconds;
             }
         }
         reconstruct(parameters);
@@ -109,9 +121,9 @@ public final class PhysSimulation {
             for(int end:joint.outputs()) {
                 Vector3f acceleration=new Vector3f(targets[end]).sub(positions[end]).mul(p.s());
                 acceleration.y-=p.g();
-                velocities[end].sub(frameVelocity).mul((float)Math.exp(-p.r()*STEP)).add(frameVelocity).fma(STEP,acceleration);
-                applyAirDrag(velocities[end],p.air(),STEP);
-                positions[end].fma(STEP,new Vector3f(velocities[end]).sub(frameVelocity));
+                velocities[end].sub(frameVelocity).mul((float)Math.exp(-p.r()*stepDuration)).add(frameVelocity).fma(stepDuration,acceleration);
+                applyAirDrag(velocities[end],p.air(),stepDuration);
+                positions[end].fma(stepDuration,new Vector3f(velocities[end]).sub(frameVelocity));
                 if(!positions[end].isFinite() || !velocities[end].isFinite()) {positions[end].set(targets[end]);velocities[end].zero();}
             }
         }

@@ -14,7 +14,7 @@ import java.util.List;
 public final class PhysCheck {
     private static final Object WORLD=new Object();
     public static void main(String[] args) throws Exception {
-        parser(); airDrag(); topology(); rotations(); collision(); simulation(); bodyCollision(); context(); example(); actualModel(); benchmark();
+        parser(); airDrag(); topology(); rotations(); collision(); simulation(); cadence(); bodyCollision(); context(); example(); actualModel(); benchmark();
         System.out.println("PASS: ysmPhys parser, topology, rigid branches, convex contacts, fixed steps, lifecycle, UI gate and isolation");
     }
 
@@ -221,6 +221,25 @@ public final class PhysCheck {
         assert sim.position(1).z<-.01 : "no movement inertia";
     }
 
+    private static void cadence() {
+        for(int fps:new int[]{1,15,30,60,120}) {
+            var m=single("g=9.8,s=20,a=90");var p=parameters(m);
+            var sim=new PhysSimulation(definition(m));sim.setFrameRate(fps);
+            sim.update(p,new Matrix4f(),0,false,WORLD,0,0,0);
+            sim.update(p,new Matrix4f(),1.0/240,false,WORLD,0,0,0);
+            assert sim.position(1).distance(new Vector3f(1,0,0))<1e-6 : "stepped before configured cadence";
+            for(int frame=2;frame<=1200;frame++) sim.update(p,new Matrix4f(),frame/240.0,false,WORLD,0,0,0);
+            assert sim.position(1).isFinite() && Math.abs(sim.position(1).length()-1)<1e-4 : "invalid low-rate chain";
+            sim.setFrameRate(fps==60?120:60);
+            sim.update(p,new Matrix4f(),5.01,false,WORLD,0,0,0);
+            assert sim.position(1).distance(new Vector3f(1,0,0))<1e-6 : "FPS change retained old state";
+        }
+        for(int fps:new int[]{0,121}) {
+            try {new PhysSimulation(definition(single("g=0"))).setFrameRate(fps);throw new AssertionError("invalid rate accepted");}
+            catch(IllegalArgumentException expected) {}
+        }
+    }
+
     private static void bodyCollision() {
         // Check final renderer matrices, not merely collision-projected particles.
         var crossing=model(bone("ysmPhysC@obstacle",-1,0,0,0),
@@ -392,12 +411,15 @@ public final class PhysCheck {
             var d=mesh.ysmPhysics;
             System.out.printf("Actual model: %d joints, %d collision cubes%n",d.joints.size(),d.cubes.size());
             boolean stable=true;
-            for(int scenario=0;scenario<11;scenario++) {
-                float speed=scenario<4?new float[]{0,-4,4,-20}[scenario]:0;
-                float tilt=scenario<4?0:new float[]{0,-60,-30,30,60,90,180}[scenario-4];
+            for(int scenario=0;scenario<22;scenario++) {
+                int solverFps=scenario<11?120:60;
+                int poseScenario=scenario%11;
+                float speed=poseScenario<4?new float[]{0,-4,4,-20}[poseScenario]:0;
+                float tilt=poseScenario<4?0:new float[]{0,-60,-30,30,60,90,180}[poseScenario-4];
                 Matrix4f root=new Matrix4f().rotateX((float)Math.toRadians(tilt));
-                if(scenario>=4) root.scale(.7f);
+                if(poseScenario>=4) root.scale(.7f);
                 var simulation=new PhysSimulation(d);var p=parameters(mesh);
+                simulation.setFrameRate(solverFps);
                 int contacts=0;
                 float lateMovement=0;
                 Vector3f[] previousTips=new Vector3f[d.joints.size()];
@@ -424,13 +446,13 @@ public final class PhysCheck {
                         Vector3f a=transforms[joint.bone()].transformPosition(d.pivot(joint.bone()));
                         Vector3f b=transforms[end].transformPosition(d.pivot(end));
                         var collider=new PhysCollider(cube.faces(),transforms[cube.bone()]);
-                        if(collider.resolveSegment(a,b,new Vector3f(),new Vector3f(),joint.parameters().c()/16f*(scenario>=4?.7f:1)-.001f,true)) {
+                        if(collider.resolveSegment(a,b,new Vector3f(),new Vector3f(),joint.parameters().c()/16f*(poseScenario>=4?.7f:1)-.001f,true)) {
                             contacts++;
                             if(contacts==1) System.out.println("First overlap speed="+speed+" frame="+frame+" joint="+d.bones.get(joint.bone()).getName()+" collider="+d.bones.get(cube.bone()).getName());
                         }
                     }
                 }
-                System.out.println("Actual rendered contacts at speed "+speed+", tilt "+tilt+", scaled="+(scenario>=4)+": "+contacts);
+                System.out.println("Actual rendered contacts at speed "+speed+", tilt "+tilt+", scaled="+(poseScenario>=4)+", FPS="+solverFps+": "+contacts);
                 stable &= contacts==0;
                 if(speed==0) {
                     System.out.println("Static actual-model maximum late frame displacement: "+lateMovement);

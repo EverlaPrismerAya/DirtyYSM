@@ -13,6 +13,7 @@ public final class ClientConfigScope {
         bind(GeneralConfig.class,ClientOnlyGeneralConfig.class);
         bind(ExtraPlayerRenderConfig.class,ClientOnlyRenderConfig.class);
         bind(LoadingStateConfig.class,ClientOnlyLoadingConfig.class);
+        bind(net.everla.ysmPhysLib.PhysConfig.class,net.everla.ysmPhysLib.PhysConfig.Local.class);
         return spec;
     }
     private static void bind(Class<?> normal,Class<?> local) {

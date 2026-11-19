@@ -525,5 +525,10 @@
   "gui.yes_steve_model.server_config.AcceptSoundFX": "Sounds (0 all/1 short/2 none)",
   "gui.yes_steve_model.config.group.server_admin": "Server administration",
   "gui.yes_steve_model.config.profile.local": " · Client-only profile",
-  "gui.yes_steve_model.config.profile.normal": " · Normal profile"
+  "gui.yes_steve_model.config.profile.normal": " · Normal profile",
+  "gui.yes_steve_model.config.group.physics_groups": "Physics groups",
+  "gui.yes_steve_model.config.physics_enabled": "Enable physics groups",
+  "gui.yes_steve_model.config.physics_enabled.desc": "Simulate world players, including other players. Inventory and model selection previews are excluded.",
+  "gui.yes_steve_model.config.physics_fps": "Physics simulation frame rate",
+  "gui.yes_steve_model.config.physics_fps.desc": "Physics steps per second, integer 0–120; default 60. 0 disables simulation and restores animation. Lower rates reduce accuracy and can cause visible stepping."
 }
