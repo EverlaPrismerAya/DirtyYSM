@@ -5,7 +5,7 @@ import com.elfmcys.yesstevemodel.audio.*;
 import com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel;
 import com.elfmcys.yesstevemodel.client.animation.molang.MolangEventDispatcher;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
-import net.everla.dirtyYsm.compat.oculus.OculusCompat;
+import net.everla.reimaginedysm.compat.oculus.OculusCompat;
 import com.elfmcys.yesstevemodel.client.animation.molang.PhysicsManager;
 import com.elfmcys.yesstevemodel.client.animation.molang.MolangWatchRegistry;
 import com.elfmcys.yesstevemodel.client.renderer.AnimationDebugOverlay;
@@ -114,7 +114,11 @@ public abstract class GeoEntity<T extends Entity> extends AnimatableEntity<T> {
     }
 
     private void refreshModel() {
-        ClientModelManager.getModelContext(this.modelId).ifPresentOrElse(assembly -> {
+        if(com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() && this.entity instanceof net.minecraft.world.entity.player.Player
+                && this.entity!=net.minecraft.client.Minecraft.getInstance().player && !(this instanceof IPreviewAnimatable)) {
+            if(this.modelAssembly!=null)clearModel();return;
+        }
+        (this instanceof IPreviewAnimatable ? ClientModelManager.peekModelContext(this.modelId) : ClientModelManager.getModelContext(this.modelId)).ifPresentOrElse(assembly -> {
             if (this.renderShape == null || this.renderShape.isDefault || assembly != this.renderShape.context) {
                 this.renderShape = buildRenderShape(assembly, false);
             }

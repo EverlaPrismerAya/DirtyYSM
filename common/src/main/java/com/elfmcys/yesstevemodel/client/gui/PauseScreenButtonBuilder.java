@@ -23,7 +23,7 @@ public class PauseScreenButtonBuilder {
         if (isAndroid()) {
             Minecraft minecraft = Minecraft.getInstance();
             Button buttonBuild = Button.builder(Component.translatable("gui.yes_steve_model.skin"), button -> {
-                if (GeneralConfig.DISCLAIMER_SHOW.get()) {
+                if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISCLAIMER_SHOW).get()) {
                     minecraft.setScreen(new DisclaimerScreen());
                 } else {
                     minecraft.setScreen(new PlayerModelScreen());

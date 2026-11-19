@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.animation.condition;
 
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;

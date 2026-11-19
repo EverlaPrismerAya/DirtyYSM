@@ -108,3 +108,15 @@ tasks.register('checkModelTransfer', JavaExec) {
 
 tasks.named('check') { dependsOn 'checkModelTransfer' }
 
+
+tasks.register('checkModelLoading', JavaExec) {
+    if (project.hasProperty('thumbnailModels')) systemProperty 'ysm.thumbnailModels', project.property('thumbnailModels')
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass = 'com.elfmcys.yesstevemodel.model.ModelLoadingCheck'
+    enableAssertions = true
+    jvmArgs '-Djava.awt.headless=true'
+    workingDir layout.buildDirectory.dir('model-loading-check')
+    doFirst { workingDir.mkdirs() }
+}
+tasks.named('check') { dependsOn 'checkModelLoading' }

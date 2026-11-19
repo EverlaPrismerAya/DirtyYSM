@@ -7,7 +7,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 import java.util.HashSet;
 import java.util.Set;

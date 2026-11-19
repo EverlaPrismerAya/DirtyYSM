@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.objects.Object2FloatArrayMap;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import com.elfmcys.yesstevemodel.resource.*;
 import com.elfmcys.yesstevemodel.resource.pojo.RawYsmModel;
-import net.everla.dirtyYsm.security.*;
+import net.everla.reimaginedysm.security.*;
 import java.nio.file.*;
 import java.util.*;
 

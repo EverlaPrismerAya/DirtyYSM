@@ -1,11 +1,11 @@
 package com.elfmcys.yesstevemodel.client.animation.molang;
 
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
 import com.elfmcys.yesstevemodel.util.accessors.ProjectileStateAccessor;
 import com.elfmcys.yesstevemodel.client.animation.molang.functions.ysm.*;
-import net.everla.dirtyYsm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
-import net.everla.dirtyYsm.compat.curios.CuriosCompat;
+import net.everla.reimaginedysm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
+import net.everla.reimaginedysm.compat.curios.CuriosCompat;
 import com.elfmcys.yesstevemodel.client.renderer.ModelPreviewRenderer;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
@@ -51,7 +51,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import dev.architectury.platform.Platform;
-import net.everla.dirtyYsm.api.attribute.ForgeAttributes;
+import net.everla.reimaginedysm.api.attribute.ForgeAttributes;
 
 import java.util.Collection;
 import java.util.Comparator;

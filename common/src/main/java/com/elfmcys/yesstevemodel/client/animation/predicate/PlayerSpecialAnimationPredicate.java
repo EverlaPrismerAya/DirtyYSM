@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel.client.animation.predicate;
 
 import com.elfmcys.yesstevemodel.client.animation.IAnimationPredicate;
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
-import net.everla.dirtyYsm.compat.parcool.ParcoolCompat;
+import net.everla.reimaginedysm.compat.parcool.ParcoolCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.PlayState;
 import com.elfmcys.yesstevemodel.client.entity.IPreviewAnimatable;

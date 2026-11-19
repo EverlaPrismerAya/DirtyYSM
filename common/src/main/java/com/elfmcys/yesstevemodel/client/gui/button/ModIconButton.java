@@ -28,7 +28,7 @@ public class ModIconButton extends FlatColorButton {
         LocalPlayer localPlayer = Minecraft.getInstance().player;
         if (localPlayer != null) {
             PlayerCapability.get(localPlayer).ifPresent(cap -> {
-                StarModelsCapability.get(localPlayer).ifPresent(cap2 -> {
+                com.elfmcys.yesstevemodel.client.ClientOnlyFavorites.get(localPlayer).ifPresent(cap2 -> {
                     if (cap2.containsModel(cap.getModelId())) {
                         guiGraphics.blit(ICON_TEXTURE, getX() + iconOffsetX, getY() + iconOffsetY, 16, 16, 16.0f, 0.0f, 16, 16, 256, 256);
                     } else {
@@ -43,7 +43,7 @@ public class ModIconButton extends FlatColorButton {
         LocalPlayer localPlayer = Minecraft.getInstance().player;
         if (localPlayer != null) {
             PlayerCapability.get(localPlayer).ifPresent(cap -> {
-                StarModelsCapability.get(localPlayer).ifPresent(cap2 -> {
+                com.elfmcys.yesstevemodel.client.ClientOnlyFavorites.get(localPlayer).ifPresent(cap2 -> {
                     String str = cap.getModelId();
                     if (cap2.containsModel(str)) {
                         cap2.removeModel(str);

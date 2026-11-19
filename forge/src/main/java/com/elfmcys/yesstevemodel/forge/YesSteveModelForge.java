@@ -17,7 +17,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 @Mod(YesSteveModel.MOD_ID)
 public final class YesSteveModelForge {

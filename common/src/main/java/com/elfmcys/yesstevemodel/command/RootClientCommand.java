@@ -27,7 +27,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.resources.ResourceLocation;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -53,8 +53,10 @@ public class RootClientCommand {
                     }
                 }
                 GeckoLibCache.getGlobalBindings().forEach((namespace, obj) -> {
-                    if (obj instanceof ContextBinding) {
-                        ((ContextBinding) obj).getKeys().forEach(key -> {
+                    java.util.Set<String> keys = obj instanceof ContextBinding binding ? binding.getKeys()
+                            : obj instanceof com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin.MathBinding math ? math.getKeys() : java.util.Set.of();
+                    if (!keys.isEmpty()) {
+                        keys.forEach(key -> {
                             set.add(String.format("%s.%s", namespace, key));
                         });
                     }

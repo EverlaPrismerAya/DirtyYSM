@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.entity;
 
-import net.everla.dirtyYsm.compat.immersivemelodies.ImmersiveMelodiesCompat;
+import net.everla.reimaginedysm.compat.immersivemelodies.ImmersiveMelodiesCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.EntityFrameStateTracker;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import net.everla.dirtyYsm.api.client.RenderLivingBridge;
+import net.everla.reimaginedysm.api.client.RenderLivingBridge;
 
 import java.util.List;
 import java.util.Optional;

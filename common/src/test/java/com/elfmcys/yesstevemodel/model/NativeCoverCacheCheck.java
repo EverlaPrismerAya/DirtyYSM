@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.model;
 
-import net.everla.dirtyYsm.api.network.FragmentLimits;
+import net.everla.reimaginedysm.api.network.FragmentLimits;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;

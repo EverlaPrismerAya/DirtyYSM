@@ -32,7 +32,7 @@ public class GeneralConfig {
 
     public static ForgeConfigSpec.BooleanValue USE_GPU_RENDERER;
 
-    public static ForgeConfigSpec.BooleanValue LAZY_MODEL_LOADING;
+    public static ForgeConfigSpec.EnumValue<ModelLoadingMode> MODEL_LOADING_MODE;
 
     public static ForgeConfigSpec.BooleanValue FORCE_CLIENT_MODE;
 
@@ -72,7 +72,7 @@ public class GeneralConfig {
 
     public static boolean effectiveModernRoulette() {
         if (ROULETTE_MODE == null || ROULETTE_SETTINGS_MODE == null) return false;
-        return ROULETTE_MODE.get() == RouletteMode.MODERN && ROULETTE_SETTINGS_MODE.get() == RouletteSettingsMode.MODERN;
+        return ClientConfigScope.effective(ROULETTE_MODE).get() == RouletteMode.MODERN && ClientConfigScope.effective(ROULETTE_SETTINGS_MODE).get() == RouletteSettingsMode.MODERN;
     }
 
     public static ForgeConfigSpec buildSpec() {
@@ -104,19 +104,20 @@ public class GeneralConfig {
         builder.comment("If rendering errors occur, try turning on this.");
         USE_COMPATIBILITY_RENDERER = builder.define("UseCompatibilityRenderer", false);
         builder.comment("Test renderer.");
-        USE_GPU_RENDERER = builder.define("UseGpuRenderer", false);
-        LAZY_MODEL_LOADING = builder.define("LazyModelLoading", true);
+        USE_GPU_RENDERER = builder.define("UseGpuRenderer", true);
+        builder.comment("Local/client-only model loading mode. Modded servers control their own mode.");
+        MODEL_LOADING_MODE = builder.defineEnum("ModelLoadingMode", ModelLoadingMode.POTATO);
         builder.comment("Always use client-only mode");
         FORCE_CLIENT_MODE = builder.define("ForceClientMode", false);
         builder.comment("Seconds to wait for the server to answer the handshake.");
         HANDSHAKE_TIMEOUT = builder.defineInRange("HandshakeTimeout", 5.0d, 1.0d, 60.0d);
         builder.comment("Maximum entries shown at search list.");
         SEARCH_SUGGESTION_COUNT = builder.defineInRange("SearchSuggestionCount", 8.0d, 1.0d, 30.0d);
-        ROULETTE_SETTINGS_MODE = builder.defineEnum("RouletteSettingsMode", RouletteSettingsMode.MODERN);
+        ROULETTE_SETTINGS_MODE = builder.defineEnum("RouletteSettingsMode", RouletteSettingsMode.CLASSIC);
         ROULETTE_MODE = builder.defineEnum("RouletteMode", RouletteMode.CLASSIC);
-        BLUR_GUI = builder.define("BlurGui", true);
-        TEXTURE_SCREEN_MODE = builder.defineEnum("TextureScreenMode", TextureScreenMode.MODERN);
-        MODEL_INFO_SCREEN_MODE = builder.defineEnum("ModelInfoScreenMode", ModelInfoScreenMode.MODERN);
+        BLUR_GUI = builder.define("BlurGui", false);
+        TEXTURE_SCREEN_MODE = builder.defineEnum("TextureScreenMode", TextureScreenMode.CLASSIC);
+        MODEL_INFO_SCREEN_MODE = builder.defineEnum("ModelInfoScreenMode", ModelInfoScreenMode.CLASSIC);
         builder.comment("The amount of volume when the animation is played.");
         SOUND_VOLUME = builder.defineInRange("SoundVolume", 100.0d, 0.0d, 100.0d);
         builder.comment("Whether to display model ID first in the model selection screen, instead of the model name filled in by the model author.");

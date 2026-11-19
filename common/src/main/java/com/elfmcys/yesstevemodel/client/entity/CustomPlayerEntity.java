@@ -3,7 +3,7 @@ package com.elfmcys.yesstevemodel.client.entity;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.controllers.PlayerAnimationController;
 import com.elfmcys.yesstevemodel.client.animation.molang.MolangEventDispatcher;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
-import net.everla.dirtyYsm.compat.oculus.OculusCompat;
+import net.everla.reimaginedysm.compat.oculus.OculusCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.value.IValue;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.AnimationState;

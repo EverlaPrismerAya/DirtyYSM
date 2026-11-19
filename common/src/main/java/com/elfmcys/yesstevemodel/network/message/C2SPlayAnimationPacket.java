@@ -3,14 +3,14 @@ package com.elfmcys.yesstevemodel.network.message;
 import com.elfmcys.yesstevemodel.model.ServerModelManager;
 import com.elfmcys.yesstevemodel.capability.ModelInfoCapability;
 import com.elfmcys.yesstevemodel.resource.models.ModelProperties;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouMaidCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool;
 import com.elfmcys.yesstevemodel.util.data.OrderedStringMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import org.apache.commons.lang3.StringUtils;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 import java.util.Map;
 

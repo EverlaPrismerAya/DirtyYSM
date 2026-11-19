@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel.network.message;
 
 import com.elfmcys.yesstevemodel.client.ClientModelManager;
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 import java.nio.ByteBuffer;
 

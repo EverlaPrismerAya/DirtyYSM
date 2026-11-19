@@ -11,8 +11,8 @@ import com.elfmcys.yesstevemodel.client.entity.PlayerPreviewEntity;
 import com.elfmcys.yesstevemodel.client.gui.button.*;
 import com.elfmcys.yesstevemodel.client.input.PlayerModelToggleKey;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
+import com.elfmcys.yesstevemodel.client.renderer.ModelPreviewRenderer;
 import com.elfmcys.yesstevemodel.config.GeneralConfig;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool;
 import com.elfmcys.yesstevemodel.mixin.client.ScreenAccessor;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
@@ -46,8 +46,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import org.apache.commons.lang3.StringUtils;
-import net.everla.dirtyYsm.gpu.GpuCapability;
-import net.everla.dirtyYsm.pinyin.PinyinMatcher;
+import net.everla.reimaginedysm.gpu.GpuCapability;
+import net.everla.reimaginedysm.pinyin.PinyinMatcher;
 
 import java.util.*;
 
@@ -100,7 +100,7 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
         this.filteredPacks = Maps.newHashMap();
         this.category = Category.ALL;
         if (NetworkHandler.isClientConnected()) {
-            this.hiddenModels.addAll(ServerConfig.CLIENT_NOT_DISPLAY_MODELS.get());
+            this.hiddenModels.addAll(com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.hiddenModels());
         }
         ClientModelManager.registerGuiWidget(this);
         this.modelPackMap = new Object2ReferenceOpenHashMap<>(ClientModelManager.getModelPackMap());
@@ -115,15 +115,15 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
     }
 
     public Screen createTextureScreen(PlayerModelScreen other, String str, ModelAssembly modelAssembly) {
-        if (GeneralConfig.TEXTURE_SCREEN_MODE != null && GeneralConfig.TEXTURE_SCREEN_MODE.get() == GeneralConfig.TextureScreenMode.MODERN) {
-            return new net.everla.dirtyYsm.gui.ModernPlayerTextureScreen(other, str, modelAssembly);
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.TEXTURE_SCREEN_MODE) != null && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.TEXTURE_SCREEN_MODE).get() == GeneralConfig.TextureScreenMode.MODERN) {
+            return new net.everla.reimaginedysm.gui.ModernPlayerTextureScreen(other, str, modelAssembly);
         }
         return new PlayerTextureScreen(other, str, modelAssembly);
     }
 
     public Screen createModelInfoScreen(PlayerModelScreen other, ModelAssembly modelAssembly) {
-        if (GeneralConfig.MODEL_INFO_SCREEN_MODE != null && GeneralConfig.MODEL_INFO_SCREEN_MODE.get() == GeneralConfig.ModelInfoScreenMode.MODERN) {
-            return new net.everla.dirtyYsm.gui.ModernModelInfoScreen(other, modelAssembly);
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.MODEL_INFO_SCREEN_MODE) != null && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.MODEL_INFO_SCREEN_MODE).get() == GeneralConfig.ModelInfoScreenMode.MODERN) {
+            return new net.everla.reimaginedysm.gui.ModernModelInfoScreen(other, modelAssembly);
         }
         return new ModelInfoScreen(other, modelAssembly);
     }
@@ -202,7 +202,7 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
             }
         }
         if (this.category == Category.STAR) {
-            StarModelsCapability.get(localPlayer).ifPresent(cap2 -> {
+            com.elfmcys.yesstevemodel.client.ClientOnlyFavorites.get(localPlayer).ifPresent(cap2 -> {
                 for (Map.Entry<String, ModelAssembly> entry : ClientModelManager.getModelAssemblyMap().entrySet()) {
                     if (cap2.containsModel(entry.getKey())) {
                         this.filteredModels.put(entry.getKey(), entry.getValue());
@@ -332,7 +332,18 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
         return true;
     }
 
+    private String pendingSelection;
+    private String selectionPage;
+    private java.util.List<String> visibleModels = java.util.List.of();
+
+    public void queueSelection(String id) { pendingSelection = id; }
+
     public void init() {
+        // Registered screens may be retained as parents; only the active page may request data.
+        if (Minecraft.getInstance().screen != this) return;
+        String pageIdentity = getCurrentPage() + "\0" + currentPath + "\0" + category + "\0" + (this.searchBox == null ? "" : this.searchBox.getValue());
+        if (!java.util.Objects.equals(selectionPage,pageIdentity)) pendingSelection = null;
+        selectionPage = pageIdentity;
         clearWidgets();
         refreshModelList();
         if (getCurrentPage() > this.maxPage) {
@@ -377,11 +388,11 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
                 navigateUp();
             }).setTooltipText("gui.back"));
         }
-        addRenderableWidget(new Checkbox(this.guiLeft + 5, this.guiTop - 22, 20, 20, Component.translatable("gui.yes_steve_model.show_model_id_first"), GeneralConfig.SHOW_MODEL_ID_FIRST.get(), true) {
+        addRenderableWidget(new Checkbox(this.guiLeft + 5, this.guiTop - 22, 20, 20, Component.translatable("gui.yes_steve_model.show_model_id_first"), com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.SHOW_MODEL_ID_FIRST).get(), true) {
             public void onPress() {
                 super.onPress();
-                GeneralConfig.SHOW_MODEL_ID_FIRST.set(selected());
-                GeneralConfig.SHOW_MODEL_ID_FIRST.save();
+                com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.SHOW_MODEL_ID_FIRST).set(selected());
+                com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.SHOW_MODEL_ID_FIRST).save();
             }
         });
         addRenderableWidget(new IconButton(this.guiLeft + 328, this.guiTop + 5, 18, 18, 32, 0, button4 -> {
@@ -408,12 +419,12 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
         addRenderableWidget(new IconButton(this.guiLeft + 397, this.guiTop + 5, 18, 18, 16, 16, button7 -> {
             Minecraft.getInstance().setScreen(new ExtraPlayerConfigScreen(this));
         }).setTooltipText("gui.yes_steve_model.config"));
-        boolean canUpload = ClientModelManager.isAllowUpload() && ClientModelManager.isOysmServer();
+        boolean canUpload = ClientModelManager.isAllowUpload() && ClientModelManager.isReimaginedYsmServer();
         IconButton uploadButton = new IconButton(this.guiLeft + 377, this.guiTop + 5, 18, 18, 0, 16, button8 -> {
             Minecraft.getInstance().setScreen(new ModelUploadScreen(this));
         });
         uploadButton.active = canUpload;
-        uploadButton.setTooltipLines(java.util.Collections.singletonList(Component.literal(canUpload ? "Upload model to server" : "Server has uploads disabled, or this is not an OpenYSM server")));
+        uploadButton.setTooltipLines(java.util.Collections.singletonList(Component.literal(canUpload ? "Upload model to server" : "Server has uploads disabled, or this is not a Reimagined YSM server")));
         addRenderableWidget(uploadButton);
         addRenderableWidget(new IconButton(this.guiLeft + 357, this.guiTop + 5, 18, 18, 80, 0, button9 -> {
             Minecraft.getInstance().setScreen(new OpenModelFolderScreen(this));
@@ -436,6 +447,7 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
             return;
         }
         Optional<AuthModelsCapability> capability = AuthModelsCapability.get(this.minecraft.player);
+        java.util.List<String> pageModels = new java.util.ArrayList<>();
         for (int i = 0; i < 10; i++) {
             int slotIndex = i + (getCurrentPage() * 10);
             int slotX = this.guiLeft + 143 + (55 * (i % 5));
@@ -454,6 +466,8 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
             int size = slotIndex - this.sortedPackKeys.size();
             if (0 <= size && size < this.sortedModelKeys.size()) {
                 String str2 = this.sortedModelKeys.get(size);
+                pageModels.add(str2);
+
                 PlayerPreviewEntity previewEntity = previewHolders[i];
                 previewEntity.resetModel();
                 ModelAssembly modelAssembly2 = this.filteredModels.get(str2);
@@ -467,6 +481,13 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
                 }
             }
         }
+        visibleModels = java.util.List.copyOf(pageModels);
+        ClientModelManager.setVisibleModels(visibleModels);
+        for (String id : visibleModels) ClientModelManager.requestPageModel(id);
+        if (pendingSelection != null && !visibleModels.contains(pendingSelection)) pendingSelection = null;
+        com.elfmcys.yesstevemodel.client.ModelThumbnails.page(
+                com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.get() == com.elfmcys.yesstevemodel.config.ModelLoadingMode.POTATO
+                        ? visibleModels.stream().filter(ClientModelManager::isModelPending).toList() : java.util.List.of());
     }
 
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
@@ -485,8 +506,8 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
         int pageY = this.guiTop + 223;
         Objects.requireNonNull(this.font);
         guiGraphics.drawString(font, str, iWidth, pageY - (9 / 2), 15986656);
-        String renderer = (NativeLibLoader.isLoaded() && !GeneralConfig.USE_COMPATIBILITY_RENDERER.get()) ? "SIMD" : "Fallback";
-        if(renderer.equals("SIMD") && GpuCapability.isAvailable() && GeneralConfig.USE_GPU_RENDERER.get()) {
+        String renderer = (NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()) ? "SIMD" : "Fallback";
+        if(renderer.equals("SIMD") && GpuCapability.isAvailable() && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) {
             renderer = "GPU";
         }
         String strVersionString = Platform.getMod(YesSteveModel.MOD_ID).getVersion();
@@ -660,12 +681,20 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
             double guiScale = Minecraft.getInstance().getWindow().getGuiScale();
             RenderSystem.enableScissor((int) ((this.guiLeft + 5) * guiScale), (int) (Minecraft.getInstance().getWindow().getHeight() - ((this.guiTop + 200) * guiScale)), (int) (125.0d * guiScale), (int) (171.0d * guiScale));
             guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0.0f, 0.0f, 100.0f);
-            InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, this.guiLeft + 67, this.guiTop + 190, 70, (this.guiLeft + 67) - mouseX, ((this.guiTop + 180) - 95) - mouseY, localPlayer);
-            guiGraphics.pose().popPose();
-            RenderSystem.disableScissor();
+            // This preview uses the real player, unlike the list's preview entities.
+            // Mark it explicitly rather than relying on an InventoryScreen mixin.
+            boolean wasPreview = ModelPreviewRenderer.isPreview();
+            ModelPreviewRenderer.setPreviewMode(true);
+            try {
+                guiGraphics.pose().translate(0.0f, 0.0f, 100.0f);
+                InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, this.guiLeft + 67, this.guiTop + 190, 70, (this.guiLeft + 67) - mouseX, ((this.guiTop + 180) - 95) - mouseY, localPlayer);
+            } finally {
+                ModelPreviewRenderer.setPreviewMode(wasPreview);
+                guiGraphics.pose().popPose();
+                RenderSystem.disableScissor();
+            }
             PlayerCapability.get(localPlayer).ifPresent(cap -> {
-                List<FormattedCharSequence> listSplit = this.font.split(FormattedText.of(ClientModelManager.getModelContext(cap.getModelId()).map(it -> {
+                List<FormattedCharSequence> listSplit = this.font.split(FormattedText.of(ClientModelManager.peekModelContext(cap.getModelId()).map(it -> {
                     Metadata metadata2 = it.getModelData().getExtraInfo();
                     if (metadata2 != null) {
                         return ModelMetadataPresenter.getLocalizedModelString(it, "metadata.name", metadata2.getName());
@@ -683,6 +712,13 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
         }
     }
 
+    @Override public void removed() {
+        pendingSelection = null;
+        ClientModelManager.setVisibleModels(java.util.List.of());
+        com.elfmcys.yesstevemodel.client.ModelThumbnails.page(java.util.List.of());
+        super.removed();
+    }
+
     public void resize(Minecraft minecraft, int width, int height) {
         String value = this.searchBox.getValue();
         super.resize(minecraft, width, height);
@@ -691,6 +727,14 @@ public class PlayerModelScreen extends Screen implements IGuiWidget {
 
     public void tick() {
         this.searchBox.tick();
+        com.elfmcys.yesstevemodel.client.ModelThumbnails.tick();
+        if (pendingSelection != null && !ClientModelManager.isModelPending(pendingSelection)) {
+            String selected = pendingSelection;
+            pendingSelection = null;
+            for (var child : children()) if (child instanceof ModelButton model && model.targetModelId().equals(selected)) {
+                model.onPress(); break;
+            }
+        }
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {

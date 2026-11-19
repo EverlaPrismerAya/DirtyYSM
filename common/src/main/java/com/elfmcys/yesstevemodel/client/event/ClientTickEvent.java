@@ -8,7 +8,7 @@ import com.elfmcys.yesstevemodel.client.upload.ModelUploadSession;
 import com.elfmcys.yesstevemodel.client.upload.UploadManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 public final class ClientTickEvent {
 

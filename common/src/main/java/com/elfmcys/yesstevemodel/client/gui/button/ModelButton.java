@@ -41,7 +41,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import net.everla.dirtyYsm.gpu.Pie;
+import net.everla.reimaginedysm.gpu.Pie;
 
 import java.util.List;
 import java.util.Objects;
@@ -142,16 +142,20 @@ public class ModelButton extends Button {
     }
 
     public Component getMessage() {
-        if (GeneralConfig.SHOW_MODEL_ID_FIRST.get().booleanValue()) {
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.SHOW_MODEL_ID_FIRST).get().booleanValue()) {
             return this.displayName;
         }
         return super.getMessage();
     }
 
+    public String targetModelId() { return this.targetModelId; }
+
     public void onPress() {
+        if (Minecraft.getInstance().screen instanceof com.elfmcys.yesstevemodel.client.gui.PlayerModelScreen screen) screen.queueSelection(null);
         LocalPlayer localPlayer;
         if (ClientModelManager.isModelPending(this.targetModelId)) {
             ClientModelManager.requestLazyModel(this.targetModelId);
+            if (Minecraft.getInstance().screen instanceof com.elfmcys.yesstevemodel.client.gui.PlayerModelScreen screen) screen.queueSelection(this.targetModelId);
             return;
         }
         if (!this.isStarred && (localPlayer = Minecraft.getInstance().player) != null) {
@@ -205,8 +209,16 @@ public class ModelButton extends Button {
         }
         boolean pending = ClientModelManager.isModelPending(this.targetModelId);
         if (pending) {
-            ClientModelManager.requestLazyModel(this.targetModelId);
-            drawLoading(guiGraphics, x + (this.width / 2.0f), y + ((this.height - 20) / 2.0f), 8.0f);
+            ClientModelManager.requestPageModel(this.targetModelId);
+            ResourceLocation thumb = com.elfmcys.yesstevemodel.client.ModelThumbnails.get(this.targetModelId);
+            if (thumb != null) {
+                RenderSystem.enableBlend();
+                guiGraphics.blit(thumb,x,y,this.width,this.height-20,0,0,52,70,52,70);
+                RenderSystem.disableBlend();
+            } else {
+                guiGraphics.drawCenteredString(font, Component.literal("…"), x + this.width/2, y + (this.height-20)/2, 0xAAAAAA);
+            }
+            if (ClientModelManager.isModelLoading(this.targetModelId)) drawLoading(guiGraphics,x+this.width/2f,y+(this.height-20)/2f,8f);
         } else {
             double guiScale = Minecraft.getInstance().getWindow().getGuiScale();
             RenderSystem.enableScissor((int) (x * guiScale), (int) (Minecraft.getInstance().getWindow().getHeight() - (((y + this.height) - 20) * guiScale)), (int) (this.width * guiScale), (int) ((this.height - 20) * guiScale));
@@ -243,7 +255,7 @@ public class ModelButton extends Button {
             guiGraphics.pose().popPose();
         }
         if (minecraft.player != null) {
-            StarModelsCapability.get(minecraft.player).ifPresent(cap -> {
+            com.elfmcys.yesstevemodel.client.ClientOnlyFavorites.get(minecraft.player).ifPresent(cap -> {
                 if (cap.containsModel(this.targetModelId)) {
                     guiGraphics.blit(ICON_TEXTURE, (x + this.width) - 14, y, starZ, 16.0f, 0.0f, 16, 16, 256, 256);
                 }

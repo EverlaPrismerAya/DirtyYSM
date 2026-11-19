@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.resource;
 
 import com.elfmcys.yesstevemodel.resource.pojo.RawYsmModel;
-import net.everla.dirtyYsm.security.YSMByteBuf;
+import net.everla.reimaginedysm.security.YSMByteBuf;
 import io.netty.buffer.Unpooled;
 
 import javax.imageio.ImageIO;

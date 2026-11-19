@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import dev.architectury.utils.GameInstance;
 import org.jetbrains.annotations.Nullable;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 public class YSMMessageFormatter {
 

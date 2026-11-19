@@ -4,7 +4,8 @@ import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.capability.AuthModelsCapability;
 import com.elfmcys.yesstevemodel.capability.ModelInfoCapability;
 import com.elfmcys.yesstevemodel.client.ExportResult;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
+import com.elfmcys.yesstevemodel.config.CommonConfig;
+import com.elfmcys.yesstevemodel.config.ModelLoadingMode.Request;
 import com.elfmcys.yesstevemodel.mixin.ConnectionAccessor;
 import com.elfmcys.yesstevemodel.mixin.ServerCommonPacketListenerImplAccessor;
 import com.elfmcys.yesstevemodel.model.format.ServerAnimationInfo;
@@ -44,11 +45,11 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.legacy.YesModelUtils;
-import net.everla.dirtyYsm.security.YSMByteBuf;
-import net.everla.dirtyYsm.security.YsmCrypt;
-import net.everla.dirtyYsm.security.YsmCrypt.CachePayload;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.legacy.YesModelUtils;
+import net.everla.reimaginedysm.security.YSMByteBuf;
+import net.everla.reimaginedysm.security.YsmCrypt;
+import net.everla.reimaginedysm.security.YsmCrypt.CachePayload;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -125,11 +126,11 @@ public final class ServerModelManager {
     private static void initRateLimit() {
         if (!limitsInitialized) {
             try {
-                int mbps = ServerConfig.BANDWIDTH_LIMIT.get();
+                int mbps = CommonConfig.BANDWIDTH_LIMIT.get();
                 double bytesPerSec = Math.max(1.0, mbps * 131072.0);
                 bandwidthLimiter = RateLimiter.create(bytesPerSec);
 
-                int threads = ServerConfig.THREAD_COUNT.get();
+                int threads = CommonConfig.THREAD_COUNT.get();
                 if (threads <= 0) {
                     threads = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
                 }
@@ -207,8 +208,8 @@ public final class ServerModelManager {
         Path blacklistFile = FOLDER.resolve("blacklist.txt");
         if (!Files.exists(blacklistFile)) {
             String content =
-                    "# Yes Steve Model 模组 - 内置模型黑名单配置文件\n" +
-                            "# Yes Steve Model Mod - Built-in Model Blacklist Configuration File\n" +
+                    "# Reimagined YSM 模组 - 内置模型黑名单配置文件\n" +
+                            "# Reimagined YSM Mod - Built-in Model Blacklist Configuration File\n" +
                             "\n" +
                             "# 功能说明：\n" +
                             "# 随着内置模型数量的增加，为了满足个性化定制需求，本模组提供了黑名单功能\n" +
@@ -442,6 +443,12 @@ public final class ServerModelManager {
         byte[] key1;
         byte[] clientNextKey;
         int step = 0;
+        com.elfmcys.yesstevemodel.config.ModelLoadingMode sentMode;
+        List<String> sentUsage = List.of();
+        com.elfmcys.yesstevemodel.network.message.S2CCommonPolicyPacket sentCommonPolicy;
+        long nextThumbnailRequest;
+        long thumbnailPage;
+        final Set<String> thumbnailRequests = new HashSet<>();
         List<ServerModelData> allowedModels = new ArrayList<>();
 
         // TODO: 未来可基于UUID持久化，这里目前每次加入生成固定clientKey
@@ -455,6 +462,7 @@ public final class ServerModelManager {
 
         if (data == null || data.remaining() == 0) {
             syncStates.remove(uuid);
+            ModelThumbnailService.forget(uuid);
             return;
         }
 
@@ -493,9 +501,12 @@ public final class ServerModelManager {
 
                     int numRequests = buf.readVarInt();
                     if (numRequests < 0 || numRequests > state.allowedModels.size()) return;
-                    List<long[]> requestedHashes = new ArrayList<>();
+                    List<ModelDownloadRequest> requestedHashes = new ArrayList<>();
                     for (int i = 0; i < numRequests; i++) {
-                        requestedHashes.add(new long[]{buf.readVarLong(), buf.readVarLong()});
+                        long h1 = buf.readVarLong(), h2 = buf.readVarLong();
+                        int reason = buf.readVarInt();
+                        if (reason < 0 || reason >= Request.values().length) return;
+                        requestedHashes.add(new ModelDownloadRequest(h1,h2,Request.values()[reason],buf.readVarLong()));
                     }
                     state.step = 3;
                     sendPacket05(uuid, state, requestedHashes);
@@ -1197,6 +1208,67 @@ public final class ServerModelManager {
         return isClientOnlyHost() && !ClientOnlyHostBridge.isLocalHost(uuid);
     }
 
+    public static void syncLoadingMode(MinecraftServer server) {
+        var mode = CommonConfig.MODEL_LOADING_MODE.get();
+        List<String> active = Arrays.stream(collectPlayerModelIds(server.getPlayerList().getPlayers())).sorted().limit(4096).toList();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            PlayerSyncState state = syncStates.get(player.getUUID());
+            if (state == null || state.step < 2 || !NetworkHandler.isPlayerConnected(player)) continue;
+            List<String> visible = shouldHideModelsFrom(player.getUUID()) ? List.of() : active;
+            var commonPolicy=com.elfmcys.yesstevemodel.network.message.S2CCommonPolicyPacket.current();
+            if(!commonPolicy.equals(state.sentCommonPolicy)) {
+                NetworkHandler.sendToClientPlayer(commonPolicy,player);
+                state.sentCommonPolicy=commonPolicy;
+            }
+            if (state.sentMode == mode && state.sentUsage.equals(visible)) continue;
+            state.sentMode = mode; state.sentUsage = visible;
+            NetworkHandler.sendToClientPlayer(new com.elfmcys.yesstevemodel.network.message.S2CLoadingModePacket(mode,visible), player);
+        }
+    }
+
+    public static void requestThumbnails(ServerPlayer player, long page, List<String> models) {
+        PlayerSyncState state = syncStates.get(player.getUUID());
+        if (state == null || state.step < 2 || shouldHideModelsFrom(player.getUUID())) return;
+        if (state.thumbnailPage != page) {
+            state.thumbnailPage = page;
+            state.thumbnailRequests.clear();
+        }
+        ModelThumbnailService.page(player.getUUID(), page);
+        if (models.isEmpty()) return;
+        long now = System.nanoTime();
+        if (now < state.nextThumbnailRequest) return;
+        state.nextThumbnailRequest = now + TimeUnit.MILLISECONDS.toNanos(200);
+        for (String id : new HashSet<>(models)) {
+            ServerModelData model = state.allowedModels.stream().filter(m -> m.getModelId().equals(id)).findFirst().orElse(null);
+            if (model == null) continue;
+            String hash = model.getLoadedModelData().getModelHash();
+            if (!state.thumbnailRequests.add(id)) continue;
+            ModelThumbnailService.request(hash, () -> {
+                        RawYsmModel raw = readThumbnailModel(id);
+                        if (!hash.equals(raw.properties.sha256)) throw new IOException("Model changed during thumbnail generation");
+                        return raw;
+                    },
+                    () -> syncStates.get(player.getUUID()) == state && ModelThumbnailService.visible(player.getUUID(), page),
+                    png -> player.server.execute(() -> {
+                        if (state.thumbnailPage == page) state.thumbnailRequests.remove(id);
+                        if (syncStates.get(player.getUUID()) == state && ModelThumbnailService.visible(player.getUUID(), page)
+                                && NetworkHandler.isPlayerConnected(player))
+                            NetworkHandler.sendToClientPlayer(new com.elfmcys.yesstevemodel.network.message.S2CModelThumbnailPacket(page,id,hash,png),player);
+                    }));
+        }
+    }
+
+    public static RawYsmModel readThumbnailModel(String id) throws Exception {
+        ServerModelData model = CACHE_NAME_INFO.get(id);
+        if (model == null) throw new IOException("Unknown model");
+        long[] hashes = YsmCrypt.calculateModelHashes(model.getLoadedModelData().getModelHash(), serverKey);
+        byte[] data = Files.readAllBytes(CACHE_SERVER.resolve(String.format("%016x%016x",hashes[0],hashes[1])));
+        CachePayload payload = YsmCrypt.readInPlace(data, serverKey);
+        try (YSMBinaryDeserializer deserializer = new YSMBinaryDeserializer(payload.data(),payload.formatVersion())) {
+            return deserializer.deserialize();
+        }
+    }
+
     private static void sendPacket03(UUID uuid, PlayerSyncState state) {
         int garbageLen = 16 + theRandom.nextInt(48);
         byte[] garbage = new byte[garbageLen];
@@ -1211,6 +1283,7 @@ public final class ServerModelManager {
             outBuf.getRawBuf().writeBytes(serverKey);
             outBuf.getRawBuf().writeBytes(state.clientKey);
 
+            outBuf.writeVarInt(CommonConfig.MODEL_LOADING_MODE.get().ordinal());
             outBuf.writeVarInt(state.allowedModels.size());
             for (ServerModelData model : state.allowedModels) {
                 String sha256 = model.getLoadedModelData().getModelHash();
@@ -1275,7 +1348,19 @@ public final class ServerModelManager {
         }
     }
 
-    private static void sendPacket05(UUID uuid, PlayerSyncState state, List<long[]> requestedHashes) {
+    private record ModelDownloadRequest(long h1, long h2, Request reason, long token) {}
+
+    private static void rejectModelRequest(UUID uuid, PlayerSyncState state, ModelDownloadRequest request, boolean retryDemand) {
+        MinecraftServer server = GameInstance.getServer();
+        if (server == null) return;
+        server.execute(() -> {
+            ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player != null && syncStates.get(uuid) == state && NetworkHandler.isPlayerConnected(player))
+                NetworkHandler.sendToClientPlayer(new com.elfmcys.yesstevemodel.network.message.S2CModelRequestCancelledPacket(request.h1,request.h2,request.token,retryDemand),player);
+        });
+    }
+
+    private static void sendPacket05(UUID uuid, PlayerSyncState state, List<ModelDownloadRequest> requestedHashes) {
         if (shouldHideModelsFrom(uuid)) return;
         YSMThreadPool.submitSync(() -> {
             boolean permitAcquired = false;
@@ -1285,9 +1370,14 @@ public final class ServerModelManager {
 
                 PendingTransfer transfer = new PendingTransfer();
 
-                for (long[] hashes : requestedHashes) {
-                    long hash1 = hashes[0];
-                    long hash2 = hashes[1];
+                for (ModelDownloadRequest request : requestedHashes) {
+                    if (syncStates.get(uuid) != state) return;
+                    if (!CommonConfig.MODEL_LOADING_MODE.get().allows(request.reason)) {
+                        rejectModelRequest(uuid,state,request,true);
+                        continue;
+                    }
+                    long hash1 = request.h1;
+                    long hash2 = request.h2;
                     String fileName = String.format("%016x%016x", hash1, hash2);
                     Path file = ServerModelManager.CACHE_SERVER.resolve(fileName);
 
@@ -1295,7 +1385,10 @@ public final class ServerModelManager {
                         long[] permitted = YsmCrypt.calculateModelHashes(model.getLoadedModelData().getModelHash(), serverKey);
                         return permitted[0] == hash1 && permitted[1] == hash2;
                     });
-                    if (!allowed || !Files.isRegularFile(file)) continue;
+                    if (!allowed || !Files.isRegularFile(file)) {
+                        rejectModelRequest(uuid,state,request,false);
+                        continue;
+                    }
 
                     byte[] fileData = Files.readAllBytes(file);
                     int totalSize = fileData.length;
@@ -1631,8 +1724,8 @@ public final class ServerModelManager {
     }
 
     public static Pair<String, String> getDefaultModelConfig() {
-        String defaultModelId = ServerConfig.DEFAULT_MODEL_ID.get();
-        String defaultTexture = ServerConfig.DEFAULT_MODEL_TEXTURE.get();
+        String defaultModelId = CommonConfig.DEFAULT_MODEL_ID.get();
+        String defaultTexture = CommonConfig.DEFAULT_MODEL_TEXTURE.get();
         if (defaultTexture.toLowerCase().endsWith(".png") && defaultTexture.length() > 4) {
             defaultTexture = defaultTexture.substring(0, defaultTexture.length() - 4);
         }

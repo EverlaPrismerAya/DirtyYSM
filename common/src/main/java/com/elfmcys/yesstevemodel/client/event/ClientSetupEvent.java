@@ -14,7 +14,7 @@ import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 import net.minecraft.client.KeyMapping;
 
 public final class ClientSetupEvent {

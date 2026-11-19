@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.network.message;
 
 import com.elfmcys.yesstevemodel.capability.ModelInfoCapability;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 import net.minecraft.network.FriendlyByteBuf;
 
 /** No private model id, texture, or other private metadata leaves the client. */

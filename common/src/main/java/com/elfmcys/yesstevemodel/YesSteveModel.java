@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel;
 
 import com.elfmcys.yesstevemodel.config.GeneralConfig;
 import com.elfmcys.yesstevemodel.config.ModSoundEvents;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
+import com.elfmcys.yesstevemodel.config.CommonConfig;
 import com.elfmcys.yesstevemodel.event.YsmEventBootstrap;
 import com.elfmcys.yesstevemodel.util.obfuscate.Keep;
 import dev.architectury.platform.Platform;
@@ -14,8 +14,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.api.config.ConfigRegistration;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.config.ConfigRegistration;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,17 +51,9 @@ public class YesSteveModel {
     }
 
     private static void initConfig() {
-        File oldConfig = Platform.getConfigFolder().resolve("yes_steve_model-common.toml").toFile();
-        if (oldConfig.isFile()) {
-            File file2 = Platform.getConfigFolder().resolve("yes_steve_model-client.toml").toFile();
-            if (!file2.isFile()) {
-                oldConfig.renameTo(file2);
-            } else {
-                oldConfig.delete();
-            }
-        }
         ConfigRegistration.register(MOD_ID, ModConfig.Type.CLIENT, GeneralConfig.buildSpec());
-        ConfigRegistration.register(MOD_ID, ModConfig.Type.SERVER, ServerConfig.buildSpec());
+        ConfigRegistration.registerNamed(MOD_ID, ModConfig.Type.CLIENT, com.elfmcys.yesstevemodel.config.ClientConfigScope.buildSpec(), "yes_steve_model-client-only.toml");
+        ConfigRegistration.register(MOD_ID, ModConfig.Type.COMMON, CommonConfig.buildSpec());
         if (!PlatformAPI.isServer()) {
             ModSoundEvents.REGISTER.register();
         }

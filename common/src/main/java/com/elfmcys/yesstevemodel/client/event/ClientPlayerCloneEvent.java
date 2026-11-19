@@ -5,8 +5,8 @@ import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import dev.architectury.event.events.client.ClientPlayerEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.api.capability.CapabilityLifecycle;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.capability.CapabilityLifecycle;
 
 public final class ClientPlayerCloneEvent {
 

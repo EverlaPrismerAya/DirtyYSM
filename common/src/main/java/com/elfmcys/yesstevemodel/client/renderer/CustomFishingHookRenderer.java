@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.client.renderer;
 
 import com.elfmcys.yesstevemodel.capability.ProjectileCapability;
-import net.everla.dirtyYsm.compat.oculus.OculusCompat;
+import net.everla.reimaginedysm.compat.oculus.OculusCompat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -14,7 +14,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.Vec3;
-import net.everla.dirtyYsm.api.item.ToolActionBridge;
+import net.everla.reimaginedysm.api.item.ToolActionBridge;
 import org.spongepowered.asm.mixin.Unique;
 
 public class CustomFishingHookRenderer {

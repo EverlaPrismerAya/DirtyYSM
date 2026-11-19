@@ -10,9 +10,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.player.Player;
-import net.everla.dirtyYsm.compat.firstperson.FirstPersonCompat;
-import net.everla.dirtyYsm.compat.playeranimator.PlayerAnimatorCompat;
-import net.everla.dirtyYsm.compat.realcamera.RealCameraCompat;
+import net.everla.reimaginedysm.compat.firstperson.FirstPersonCompat;
+import net.everla.reimaginedysm.compat.playeranimator.PlayerAnimatorCompat;
+import net.everla.reimaginedysm.compat.realcamera.RealCameraCompat;
 
 public class ReplacePlayerRenderEvent {
 
@@ -24,10 +24,10 @@ public class ReplacePlayerRenderEvent {
             return false;
         }
         LocalPlayer localPlayer = Minecraft.getInstance().player;
-        if (entity.equals(localPlayer) && GeneralConfig.DISABLE_SELF_MODEL.get().booleanValue()) {
+        if (entity.equals(localPlayer) && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_SELF_MODEL).get().booleanValue()) {
             return false;
         }
-        if ((!entity.equals(localPlayer) && GeneralConfig.DISABLE_OTHER_MODEL.get().booleanValue()) || entity.isSpectator()) {
+        if ((!entity.equals(localPlayer) && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_OTHER_MODEL).get().booleanValue()) || (com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() && entity!=localPlayer) || entity.isSpectator()) {
             return false;
         }
         boolean[] cancelled = {false};
@@ -36,7 +36,7 @@ public class ReplacePlayerRenderEvent {
                 if (!CameraUtil.isFirstPerson(cap)
                         || FirstPersonCompat.isFirstPersonActive()
                         || RealCameraCompat.isActive()
-                        || GeneralConfig.DISABLE_EXTERNAL_FP_ANIM.get().booleanValue()
+                        || com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_EXTERNAL_FP_ANIM).get().booleanValue()
                         || !PlayerAnimatorCompat.isPlayerAnimated(localPlayer)) {
                     cancelled[0] = true;
                     RendererManager.getPlayerRenderer().render(entity, entity.getYRot(), partialTick, poseStack, bufferSource, packedLight);

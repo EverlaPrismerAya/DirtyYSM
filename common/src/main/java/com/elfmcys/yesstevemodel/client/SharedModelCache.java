@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel.client;
 
 import com.elfmcys.yesstevemodel.model.ServerModelManager;
 import com.elfmcys.yesstevemodel.resource.YSMBinaryDeserializer;
-import net.everla.dirtyYsm.security.YsmCrypt;
+import net.everla.reimaginedysm.security.YsmCrypt;
 import java.nio.file.*;
 import java.util.stream.Stream;
 
@@ -56,8 +56,8 @@ public final class SharedModelCache {
         try (Stream<Path> files = Files.walk(ServerModelManager.CACHE_CLIENT)) {
             for (Path file : files.filter(Files::isRegularFile).filter(p -> p.getFileName().toString().matches("[0-9a-fA-F]{40}")).toList()) {
                 try {
-                    java.util.UUID id = net.everla.dirtyYsm.security.YSMClientCache.getModelUUIDFromFileName(file.getFileName().toString(), clientKey);
-                    if (id == null || !net.everla.dirtyYsm.security.YSMClientCache.verifyFileContent(file.toFile(), id.getMostSignificantBits(), id.getLeastSignificantBits())) continue;
+                    java.util.UUID id = net.everla.reimaginedysm.security.YSMClientCache.getModelUUIDFromFileName(file.getFileName().toString(), clientKey);
+                    if (id == null || !net.everla.reimaginedysm.security.YSMClientCache.verifyFileContent(file.toFile(), id.getMostSignificantBits(), id.getLeastSignificantBits())) continue;
                     YsmCrypt.CachePayload payload = YsmCrypt.readInPlace(Files.readAllBytes(file), clientKey);
                     try (YSMBinaryDeserializer reader = new YSMBinaryDeserializer(payload.data(), payload.formatVersion())) {
                         if (hash.equals(reader.deserializeKeepOpen().properties.sha256)) return store(hash, payload);

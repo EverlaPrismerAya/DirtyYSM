@@ -14,7 +14,14 @@ import java.nio.file.Path;
 @Environment(EnvType.CLIENT)
 public final class ClientOnlySelection {
 
-    private static final Path FILE = ServerModelManager.FOLDER.resolve("client_selection.json");
+    private static Path FILE = ServerModelManager.FOLDER.resolve("client_selection.json");
+    private static boolean localScope;
+    private static synchronized void scope() {
+        boolean next=ClientOnlyMode.isActive();
+        if(next==localScope)return;
+        localScope=next;loaded=false;modelId=null;textureId=null;
+        FILE=ServerModelManager.FOLDER.resolve(next?"client_state/selection.json":"client_selection.json");
+    }
     private static final Gson GSON = new Gson();
 
     private static volatile String modelId;
@@ -25,6 +32,7 @@ public final class ClientOnlySelection {
     }
 
     public static synchronized void save(String model, String texture) {
+        scope();
         modelId = model;
         textureId = texture;
         loaded = true;
@@ -40,6 +48,7 @@ public final class ClientOnlySelection {
     }
 
     public static synchronized void clear() {
+        scope();
         modelId = null;
         textureId = null;
         loaded = true;
@@ -48,6 +57,7 @@ public final class ClientOnlySelection {
     }
 
     private static void load() {
+        scope();
         if (loaded) return;
         loadFromDisk();
     }

@@ -10,8 +10,8 @@ import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.everla.dirtyYsm.api.item.ToolActionBridge;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.item.ToolActionBridge;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public class C2SSwingArmPacket {
 

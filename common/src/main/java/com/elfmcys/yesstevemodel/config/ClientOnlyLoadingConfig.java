@@ -1,0 +1,19 @@
+package com.elfmcys.yesstevemodel.config;
+
+import net.minecraftforge.common.ForgeConfigSpec;
+
+public class ClientOnlyLoadingConfig {
+
+    public static ForgeConfigSpec.BooleanValue DISABLE_LOADING_STATE_SCREEN;
+
+    public static ForgeConfigSpec.EnumValue<LoadingStateConfig.Position> LOADING_STATE_POSITION;
+
+public static void define(ForgeConfigSpec.Builder builder) {
+        builder.push("loading_state_screen");
+        builder.comment("Whether to disable loading state screen");
+        DISABLE_LOADING_STATE_SCREEN = builder.define("DisableLoadingStateScreen", false);
+        builder.comment("Loading state screen position");
+        LOADING_STATE_POSITION = builder.defineEnum("LoadingStatePosition", LoadingStateConfig.Position.TOP_CENTER);
+        builder.pop();
+    }
+}

@@ -1,16 +1,16 @@
 package com.elfmcys.yesstevemodel.client.animation;
 
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
-import net.everla.dirtyYsm.compat.parcool.ParcoolCompat;
-import net.everla.dirtyYsm.compat.slashblade.SlashBladeCompat;
-import net.everla.dirtyYsm.compat.gun.swarfare.SWarfareCompat;
-import net.everla.dirtyYsm.compat.gun.tacz.TacCompat;
+import net.everla.reimaginedysm.compat.parcool.ParcoolCompat;
+import net.everla.reimaginedysm.compat.slashblade.SlashBladeCompat;
+import net.everla.reimaginedysm.compat.gun.swarfare.SWarfareCompat;
+import net.everla.reimaginedysm.compat.gun.tacz.TacCompat;
 import com.elfmcys.yesstevemodel.client.entity.IPreviewAnimatable;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.ILoopType;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.PlayState;
 import com.elfmcys.yesstevemodel.molang.runtime.ExpressionEvaluator;
-import net.everla.dirtyYsm.compat.create.CreateCompat;
+import net.everla.reimaginedysm.compat.create.CreateCompat;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;

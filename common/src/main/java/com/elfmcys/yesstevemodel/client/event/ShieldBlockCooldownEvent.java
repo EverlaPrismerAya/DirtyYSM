@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.client.event;
 
 import net.minecraft.world.entity.LivingEntity;
-import net.everla.dirtyYsm.api.entity.EntityDataBridge;
+import net.everla.reimaginedysm.api.entity.EntityDataBridge;
 
 public class ShieldBlockCooldownEvent {
 

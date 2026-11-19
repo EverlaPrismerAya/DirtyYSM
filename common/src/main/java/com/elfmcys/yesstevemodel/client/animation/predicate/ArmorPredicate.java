@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.client.animation.predicate;
 
 import com.elfmcys.yesstevemodel.client.animation.IAnimationPredicate;
-import net.everla.dirtyYsm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
+import net.everla.reimaginedysm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
 import com.elfmcys.yesstevemodel.client.entity.LivingAnimatable;
 import com.elfmcys.yesstevemodel.client.animation.condition.ConditionArmor;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.ILoopType;

@@ -38,10 +38,10 @@ public class ExtraPlayerRenderScreen extends Screen {
         this.isRightDragging = false;
         this.offsetX = 5;
         this.offsetY = 1;
-        this.mouseStartX = ExtraPlayerRenderConfig.PLAYER_POS_X.get().intValue();
-        this.mouseStartY = ExtraPlayerRenderConfig.PLAYER_POS_Y.get().intValue();
-        this.rotationX = ExtraPlayerRenderConfig.PLAYER_SCALE.get().floatValue();
-        this.rotationY = ExtraPlayerRenderConfig.PLAYER_YAW_OFFSET.get().floatValue();
+        this.mouseStartX = com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_POS_X).get().intValue();
+        this.mouseStartY = com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_POS_Y).get().intValue();
+        this.rotationX = com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_SCALE).get().floatValue();
+        this.rotationY = com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_YAW_OFFSET).get().floatValue();
         if (PauseScreenButtonBuilder.isAndroid()) {
             this.offsetX = 16;
             this.offsetY = 0;
@@ -59,10 +59,10 @@ public class ExtraPlayerRenderScreen extends Screen {
         }
         MutableComponent mutableComponentTranslatable = Component.translatable("gui.yes_steve_model.hide_or_show");
         int iWidth = this.font.width(mutableComponentTranslatable) + 24;
-        addRenderableWidget(new Checkbox((this.width - iWidth) / 2, this.height + i, iWidth, 20, mutableComponentTranslatable, ExtraPlayerRenderConfig.DISABLE_PLAYER_RENDER.get().booleanValue(), true) {
+        addRenderableWidget(new Checkbox((this.width - iWidth) / 2, this.height + i, iWidth, 20, mutableComponentTranslatable, com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.DISABLE_PLAYER_RENDER).get().booleanValue(), true) {
             public void onPress() {
                 super.onPress();
-                ExtraPlayerRenderConfig.DISABLE_PLAYER_RENDER.set(Boolean.valueOf(selected()));
+                com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.DISABLE_PLAYER_RENDER).set(Boolean.valueOf(selected()));
             }
         });
     }
@@ -93,7 +93,7 @@ public class ExtraPlayerRenderScreen extends Screen {
             tipY += 10;
         }
         guiGraphics.pose().popPose();
-        if (Minecraft.getInstance().player != null && !ExtraPlayerRenderConfig.DISABLE_PLAYER_RENDER.get().booleanValue()) {
+        if (Minecraft.getInstance().player != null && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.DISABLE_PLAYER_RENDER).get().booleanValue()) {
             ModelPreviewRenderer.renderPlayerOverlay(guiGraphics, Minecraft.getInstance().player, this.mouseStartX, this.mouseStartY, this.rotationX, this.rotationY, -500, this.minecraft.getFrameTime());
         }
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -153,10 +153,10 @@ public class ExtraPlayerRenderScreen extends Screen {
     }
 
     public void onClose() {
-        ExtraPlayerRenderConfig.PLAYER_POS_X.set(Integer.valueOf(this.mouseStartX));
-        ExtraPlayerRenderConfig.PLAYER_POS_Y.set(Integer.valueOf(this.mouseStartY));
-        ExtraPlayerRenderConfig.PLAYER_SCALE.set(Double.valueOf(this.rotationX));
-        ExtraPlayerRenderConfig.PLAYER_YAW_OFFSET.set(Double.valueOf(this.rotationY));
+        com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_POS_X).set(Integer.valueOf(this.mouseStartX));
+        com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_POS_Y).set(Integer.valueOf(this.mouseStartY));
+        com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_SCALE).set(Double.valueOf(this.rotationX));
+        com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(ExtraPlayerRenderConfig.PLAYER_YAW_OFFSET).set(Double.valueOf(this.rotationY));
         super.onClose();
     }
 }

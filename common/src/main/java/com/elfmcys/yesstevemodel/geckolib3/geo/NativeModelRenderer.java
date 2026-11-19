@@ -15,11 +15,11 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-import net.everla.dirtyYsm.compat.oculus.OculusCompat;
-import net.everla.dirtyYsm.compat.optifine.OptiFineDetector;
-import net.everla.dirtyYsm.gpu.GpuCapability;
-import net.everla.dirtyYsm.gpu.GpuRenderPath;
-import net.everla.dirtyYsm.gpu.IrisRenderPath;
+import net.everla.reimaginedysm.compat.oculus.OculusCompat;
+import net.everla.reimaginedysm.compat.optifine.OptiFineDetector;
+import net.everla.reimaginedysm.gpu.GpuCapability;
+import net.everla.reimaginedysm.gpu.GpuRenderPath;
+import net.everla.reimaginedysm.gpu.IrisRenderPath;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -38,12 +38,14 @@ public class NativeModelRenderer {
         RenderSystem.getProjectionMatrix().mul(RenderSystem.getModelViewMatrix(), projectionModelViewMatrix);
         boolean isPreview = ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer();
 
-        if (textureLocation != null && NativeLibLoader.isLoaded() && !GeneralConfig.USE_COMPATIBILITY_RENDERER.get() && GeneralConfig.USE_GPU_RENDERER.get()) {
+        // GUI previews share the UI's deferred buffers and shader state. Keep them
+        // on the native CPU path until direct GPU draws can preserve that state.
+        if (!ModelPreviewRenderer.isPreview() && textureLocation != null && NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get() && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) {
 
             if(!GpuCapability.isAvailable())
             {
                 ChatLogger.INSTANCE.logFormatted("Disabled GPU renderer for: " + GpuCapability.getReason());
-                GeneralConfig.USE_GPU_RENDERER.set(false);
+                com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).set(false);
                 return;
             }
 
@@ -58,7 +60,7 @@ public class NativeModelRenderer {
             }
         }
 
-        if (NativeLibLoader.isLoaded() && !GeneralConfig.USE_COMPATIBILITY_RENDERER.get()) { // WIP: SIMD MODEL RENDER
+        if (NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()) { // WIP: SIMD MODEL RENDER
             nativeRenderModel(
                     buffer,
                     pose,

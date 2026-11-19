@@ -7,8 +7,8 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientRawInputEvent;
 import net.minecraft.client.KeyMapping;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.api.client.KeyMappingFactory;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.client.KeyMappingFactory;
 
 public final class DebugAnimationKey {
 

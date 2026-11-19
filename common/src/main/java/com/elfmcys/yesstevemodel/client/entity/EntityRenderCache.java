@@ -33,25 +33,27 @@ public class EntityRenderCache {
             } else if (!geoEntity.isDebugMode()) {
                 it.remove();
             } else {
+                if(com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() && geoEntity.getEntity() instanceof net.minecraft.world.entity.player.Player
+                        && geoEntity.getEntity()!=Minecraft.getInstance().player && !(geoEntity instanceof IPreviewAnimatable))continue;
                 geoEntity.tickModel();
                 if (geoEntity.supportsAsync() && geoEntity.isModelInitialized() && geoEntity.isModelReady()) {
                     Entity entity = geoEntity.getEntity();
                     if (entity instanceof AbstractClientPlayer) {
                         if (entity instanceof LocalPlayer) {
-                            if (!GeneralConfig.DISABLE_SELF_MODEL.get()) {
+                            if (!com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_SELF_MODEL).get()) {
                                 geoEntity.submitAsyncUpdate(partialTick);
                                 strongRefs.add(geoEntity);
                             }
-                        } else if (!GeneralConfig.DISABLE_OTHER_MODEL.get()) {
+                        } else if (!com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_OTHER_MODEL).get()) {
                             geoEntity.submitAsyncUpdate(partialTick);
                             strongRefs.add(geoEntity);
                         }
                     } else if (entity instanceof Projectile) {
-                        if (!GeneralConfig.DISABLE_PROJECTILE_MODEL.get()) {
+                        if (!com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_PROJECTILE_MODEL).get()) {
                             geoEntity.submitAsyncUpdate(partialTick);
                             strongRefs.add(geoEntity);
                         }
-                    } else if (!GeneralConfig.DISABLE_VEHICLE_MODEL.get()) {
+                    } else if (!com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_VEHICLE_MODEL).get()) {
                         geoEntity.submitAsyncUpdate(partialTick);
                         strongRefs.add(geoEntity);
                     }

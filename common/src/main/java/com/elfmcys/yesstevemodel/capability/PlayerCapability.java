@@ -4,8 +4,8 @@ import com.elfmcys.yesstevemodel.client.animation.molang.struct.RoamingStruct;
 import com.elfmcys.yesstevemodel.client.animation.molang.struct.RoamingSyncBatch;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.everla.dirtyYsm.compat.bettercombat.BetterCombatCompat;
-import net.everla.dirtyYsm.compat.firstperson.FirstPersonCompat;
+import net.everla.reimaginedysm.compat.bettercombat.BetterCombatCompat;
+import net.everla.reimaginedysm.compat.firstperson.FirstPersonCompat;
 import com.elfmcys.yesstevemodel.client.entity.PlayerEntityFrameState;
 import com.elfmcys.yesstevemodel.client.entity.LivingAnimatable;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
@@ -61,6 +61,14 @@ public final class PlayerCapability extends CustomPlayerEntity {
         this.molangVarsMap = new Int2ReferenceOpenHashMap<>(8);
     }
 
+    @Override public void initModelWithTexture(String model,String texture) {
+        if(com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() && !(this.entity instanceof LocalPlayer))return;
+        super.initModelWithTexture(model,texture);
+    }
+    @Override public boolean isModelActive() {
+        return (!com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() || this.entity instanceof LocalPlayer) && super.isModelActive();
+    }
+
     @Override
     public PlayerEntityFrameState createPositionTracker(Player player) {
         return new PlayerEntityFrameState(player, player instanceof LocalPlayer);
@@ -91,6 +99,14 @@ public final class PlayerCapability extends CustomPlayerEntity {
     @Override
     public void setCurrentModel(AnimatedGeoModel model) {
         super.setCurrentModel(model);
+        if(isLocalPlayerModel() && com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive()) {
+            String hash=getModelAssembly().getModelData().getModelHash();
+            var store=com.elfmcys.yesstevemodel.client.ClientRoamingState.STORE;
+            MolangVarHolder local=this.molangVarsMap.computeIfAbsent(this.currentModelHashId,k->new MolangVarHolder());
+            local.currentVars=store.load(this.entity.getUUID(),hash);
+            this.serverVarContainer=new RoamingStruct(this.currentModelHashId,local.currentVars,()->store.changed(this.entity.getUUID(),hash,local.currentVars));
+            return;
+        }
         MolangVarHolder varHolder = this.molangVarsMap.get(this.currentModelHashId);
         if (varHolder != null && varHolder.currentVars != null) {
             if (isLocalPlayerModel()) {
@@ -139,6 +155,7 @@ public final class PlayerCapability extends CustomPlayerEntity {
     }
 
     public void updateMolangVars(int i, Int2FloatOpenHashMap int2FloatOpenHashMap) {
+        if(com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive())return;
         MolangVarHolder varHolder = this.molangVarsMap.computeIfAbsent(i, i2 -> {
             return new MolangVarHolder();
         });
@@ -194,6 +211,7 @@ public final class PlayerCapability extends CustomPlayerEntity {
             if (struct instanceof RoamingStruct roamingStruct) {
                 if (roamingStruct.hasPendingChanges()) {
                     RoamingSyncBatch syncBatch = roamingStruct.consumePendingBoneData();
+                    if(com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive())return;
                     applyMolangDelta(syncBatch.modelHashId(), syncBatch.changedVariables());
                     String[] strArr = new String[syncBatch.changedVariables().size()];
                     float[] fArr = new float[syncBatch.changedVariables().size()];

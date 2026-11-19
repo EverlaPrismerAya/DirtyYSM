@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.mixin;
 
 import com.elfmcys.yesstevemodel.YesSteveModel;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouMaidCompat;
 import com.elfmcys.yesstevemodel.event.CapabilityEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;

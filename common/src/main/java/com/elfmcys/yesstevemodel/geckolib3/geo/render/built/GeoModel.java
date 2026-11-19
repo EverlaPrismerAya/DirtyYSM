@@ -17,7 +17,7 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import net.everla.dirtyYsm.gpu.GpuRenderPath;
+import net.everla.reimaginedysm.gpu.GpuRenderPath;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -151,7 +151,7 @@ public class GeoModel {
             is.close();
 
 
-            String targetAnnotationDesc = "Lnet/everla/dirtyYsm/annotations/BufferBuilderMapping;";
+            String targetAnnotationDesc = "Lnet/everla/reimaginedysm/annotations/BufferBuilderMapping;";
 
             BiFunction<List<AnnotationNode>, String, String> getAnnotationValue = (annotations, targetDesc) -> {
                 if (annotations == null) return null;

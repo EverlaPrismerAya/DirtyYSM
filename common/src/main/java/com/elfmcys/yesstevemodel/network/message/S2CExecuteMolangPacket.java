@@ -4,14 +4,14 @@ import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouMaidCompat;
 import com.elfmcys.yesstevemodel.geckolib3.resource.GeckoLibCache;
 import com.elfmcys.yesstevemodel.molang.parser.ParseException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public class S2CExecuteMolangPacket {
 

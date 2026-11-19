@@ -2,7 +2,6 @@ package com.elfmcys.yesstevemodel.client.gui.button;
 
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.gui.ISpecialWidget;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
 import com.elfmcys.yesstevemodel.geckolib3.resource.GeckoLibCache;
 import com.elfmcys.yesstevemodel.molang.parser.ParseException;
@@ -37,7 +36,7 @@ public class AnimationSlider extends RangedSliderWidget implements ISpecialWidge
         try {
             String str = this.controllerName + "=" + getValue();
             this.model.executeExpression(GeckoLibCache.parseSimpleExpression(str), true, false, null);
-            if (!GeckoLibCache.isRoamingVariableAssignment(str) && NetworkHandler.isClientConnected() && !ServerConfig.LOW_BANDWIDTH_USAGE.get().booleanValue()) {
+            if (!GeckoLibCache.isRoamingVariableAssignment(str) && NetworkHandler.isClientConnected() && !com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.lowBandwidthUsage()) {
                 NetworkHandler.sendToServer(new C2SRequestExecuteMolangPacket(str, this.model.getEntity().getId()));
             }
         } catch (ParseException e) {

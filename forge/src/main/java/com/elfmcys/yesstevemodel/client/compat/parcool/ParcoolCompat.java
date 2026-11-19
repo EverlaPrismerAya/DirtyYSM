@@ -27,7 +27,7 @@ public class ParcoolCompat {
     private static boolean INCOMPATIBLE_VERSION;
 
     public static void init() {
-        if (GeneralConfig.PARCOOL != null && !GeneralConfig.PARCOOL.get()) {
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.PARCOOL) != null && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.PARCOOL).get()) {
             IS_LOADED = false;
             return;
         }

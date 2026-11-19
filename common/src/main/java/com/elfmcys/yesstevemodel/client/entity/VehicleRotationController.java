@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.entity;
 
-import net.everla.dirtyYsm.compat.immersiveaircraft.ImmersiveAirCraftCompat;
+import net.everla.reimaginedysm.compat.immersiveaircraft.ImmersiveAirCraftCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.IAnimationController;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.value.IValue;
@@ -8,7 +8,7 @@ import com.elfmcys.yesstevemodel.geckolib3.core.snapshot.BoneTopLevelSnapshot;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.BoneTransformProvider;
 import com.elfmcys.yesstevemodel.geckolib3.core.util.TransitionVector3f;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.AnimationContext;
-import net.everla.dirtyYsm.compat.simpleplanes.SimplePlanesCompat;
+import net.everla.reimaginedysm.compat.simpleplanes.SimplePlanesCompat;
 import com.elfmcys.yesstevemodel.molang.runtime.ExpressionEvaluator;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceMap;
 import org.jetbrains.annotations.Nullable;

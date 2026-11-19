@@ -59,7 +59,7 @@ public class TouhouMaidModelScreen extends PlayerModelScreen {
         InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, this.guiLeft + 67, this.guiTop + 190, 70, (this.guiLeft + 67) - mouseX, ((this.guiTop + 180) - 95) - mouseY, this.maid);
         RenderSystem.disableScissor();
         this.maid.getCapability(MaidCapabilityProvider.MAID_CAP).ifPresent(cap -> {
-            List<FormattedCharSequence> listSplit = this.font.split(FormattedText.of(ClientModelManager.getModelContext(cap.getModelId()).map(it -> {
+            List<FormattedCharSequence> listSplit = this.font.split(FormattedText.of(ClientModelManager.peekModelContext(cap.getModelId()).map(it -> {
                 Metadata metadata2 = it.getModelData().getExtraInfo();
                 if (metadata2 != null) {
                     return ModelMetadataPresenter.getLocalizedModelString(it, "metadata.name", metadata2.getName());

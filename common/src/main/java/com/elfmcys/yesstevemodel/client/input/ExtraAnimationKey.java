@@ -18,8 +18,8 @@ import dev.architectury.event.events.client.ClientRawInputEvent;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.api.client.KeyMappingFactory;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.client.KeyMappingFactory;
 
 import java.util.List;
 

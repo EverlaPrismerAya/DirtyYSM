@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin.query;
 
 import net.minecraft.tags.TagKey;
 import net.minecraft.core.registries.Registries;
-import net.everla.dirtyYsm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
+import net.everla.reimaginedysm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.IContext;
 import com.elfmcys.yesstevemodel.geckolib3.util.MolangUtils;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.funciton.entity.LivingEntityFunction;

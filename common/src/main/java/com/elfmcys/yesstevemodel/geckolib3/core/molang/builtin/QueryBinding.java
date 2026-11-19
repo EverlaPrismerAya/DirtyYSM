@@ -3,7 +3,7 @@ package com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin;
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.AnimationControllerContext;
 import com.elfmcys.yesstevemodel.audio.PlaybackFlags;
-import net.everla.dirtyYsm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
+import net.everla.reimaginedysm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
 import com.elfmcys.yesstevemodel.client.entity.PlayerEntityFrameState;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.binding.ContextBinding;

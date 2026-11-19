@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'yes_steve_model'
+rootProject.name = 'reimagined_ysm'
 
 include 'common'
 include 'fabric'

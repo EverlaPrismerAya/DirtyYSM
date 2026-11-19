@@ -5,7 +5,6 @@ import com.elfmcys.yesstevemodel.client.gui.DisclaimerScreen;
 import com.elfmcys.yesstevemodel.client.gui.ExtraPlayerConfigScreen;
 import com.elfmcys.yesstevemodel.client.gui.PlayerModelScreen;
 import com.elfmcys.yesstevemodel.config.GeneralConfig;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import com.elfmcys.yesstevemodel.util.InputUtil;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -13,8 +12,8 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientRawInputEvent;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.api.client.KeyMappingFactory;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.client.KeyMappingFactory;
 
 public final class PlayerModelToggleKey {
 
@@ -39,9 +38,9 @@ public final class PlayerModelToggleKey {
                 YesSteveModel.sendUnavailableMessage();
                 return;
             }
-            if (NetworkHandler.isClientConnected() && !ServerConfig.CAN_SWITCH_MODEL.get()) {
+            if (NetworkHandler.isClientConnected() && !com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.canSwitchModel()) {
                 Minecraft.getInstance().setScreen(new ExtraPlayerConfigScreen(null));
-            } else if (GeneralConfig.DISCLAIMER_SHOW.get()) {
+            } else if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISCLAIMER_SHOW).get()) {
                 Minecraft.getInstance().setScreen(new DisclaimerScreen());
             } else {
                 Minecraft.getInstance().setScreen(new PlayerModelScreen());

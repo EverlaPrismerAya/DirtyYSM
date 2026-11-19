@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.client.animation.condition;
 
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
-import net.everla.dirtyYsm.compat.slashblade.SlashBladeCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.slashblade.SlashBladeCompat;
 import com.elfmcys.yesstevemodel.util.ItemTagsConstants;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;

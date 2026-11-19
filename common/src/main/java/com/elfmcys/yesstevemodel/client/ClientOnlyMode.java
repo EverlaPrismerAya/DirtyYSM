@@ -27,7 +27,7 @@ public final class ClientOnlyMode {
             return;
         }
         standalone = true;
-        YesSteveModel.LOGGER.info("[YSM] No server-side mod detected, entering client-only mode.");
+        YesSteveModel.LOGGER.info("[YSM] Entering isolated client-only mode.");
         ClientModelManager.enterClientOnlyMode();
     }
 

@@ -21,7 +21,7 @@ public class GunArmRenderEvent {
     @SubscribeEvent
     public void onRenderPlayerArm(RenderPlayerArmEvent event) {
         LocalPlayer player;
-        if (!YesSteveModel.isAvailable() || GeneralConfig.DISABLE_SELF_MODEL.get() || GeneralConfig.DISABLE_SELF_HANDS.get() || (player = event.getLocalPlayer()) == null) {
+        if (!YesSteveModel.isAvailable() || com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_SELF_MODEL).get() || com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_SELF_HANDS).get() || (player = event.getLocalPlayer()) == null) {
             return;
         }
         event.setCanceled(true);

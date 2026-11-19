@@ -2,9 +2,9 @@ package com.elfmcys.yesstevemodel.client.renderer;
 
 import com.elfmcys.yesstevemodel.capability.VehicleCapability;
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
-import net.everla.dirtyYsm.compat.firstperson.FirstPersonCompat;
-import net.everla.dirtyYsm.compat.oculus.OculusCompat;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.firstperson.FirstPersonCompat;
+import net.everla.reimaginedysm.compat.oculus.OculusCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
 import com.elfmcys.yesstevemodel.client.animation.AnimationTracker;
 import com.elfmcys.yesstevemodel.client.entity.LivingAnimatable;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;

@@ -7,7 +7,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.everla.dirtyYsm.api.client.HudOverlay;
+import net.everla.reimaginedysm.api.client.HudOverlay;
 
 public class ModelSyncStateOverlay implements HudOverlay {
 
@@ -26,11 +26,11 @@ public class ModelSyncStateOverlay implements HudOverlay {
         int barX;
         int barY;
 
-        if (LoadingStateConfig.DISABLE_LOADING_STATE_SCREEN.get().booleanValue()) {
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(LoadingStateConfig.DISABLE_LOADING_STATE_SCREEN).get().booleanValue()) {
             return;
         }
 
-        switch (LoadingStateConfig.LOADING_STATE_POSITION.get()) {
+        switch (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(LoadingStateConfig.LOADING_STATE_POSITION).get()) {
             case TOP_LEFT:
                 textX = 10;
                 textY = 10;
@@ -164,7 +164,7 @@ public class ModelSyncStateOverlay implements HudOverlay {
         int drawX;
         int textWidth = font.width(textComponent);
 
-        drawX = switch (LoadingStateConfig.LOADING_STATE_POSITION.get()) {
+        drawX = switch (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(LoadingStateConfig.LOADING_STATE_POSITION).get()) {
             case TOP_LEFT, BOTTOM_LEFT -> baseX;
             case TOP_CENTER, BOTTOM_CENTER -> (screenWidth - textWidth) / 2;
             case TOP_RIGHT, BOTTOM_RIGHT -> baseX - textWidth;

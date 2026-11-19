@@ -8,7 +8,7 @@ import com.elfmcys.yesstevemodel.geckolib3.core.builder.ILoopType;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.PlayState;
 import com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils;
-import net.everla.dirtyYsm.compat.gun.tacz.ConditionTAC;
+import net.everla.reimaginedysm.compat.gun.tacz.ConditionTAC;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;

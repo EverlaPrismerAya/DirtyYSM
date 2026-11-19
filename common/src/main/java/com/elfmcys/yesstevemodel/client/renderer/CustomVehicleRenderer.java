@@ -8,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.phys.Vec3;
-import net.everla.dirtyYsm.api.entity.EntityDataBridge;
+import net.everla.reimaginedysm.api.entity.EntityDataBridge;
 
 public class CustomVehicleRenderer {
     public static boolean renderVehicle(Entity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {

@@ -1,9 +1,18 @@
 package com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin;
 
-import com.elfmcys.yesstevemodel.geckolib3.core.molang.binding.ContextBinding;
+import com.elfmcys.yesstevemodel.molang.runtime.binding.ObjectBinding;
+import com.elfmcys.yesstevemodel.molang.runtime.Function;
+import java.util.HashMap;
+import java.util.Map;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin.math.*;
 
-public class MathBinding extends ContextBinding {
+public class MathBinding implements ObjectBinding {
+    // Math is also used by the headless thumbnail worker; ContextBinding depends on client entities.
+    private final Map<String,Object> bindings = new HashMap<>();
+    public java.util.Set<String> getKeys() { return bindings.keySet(); }
+    @Override public Object getProperty(String name) { return bindings.get(name); }
+    private void function(String name, Function function) { bindings.put(name, function); }
+    private void constValue(String name, double value) { bindings.put(name, (float)value); }
 
     public static final MathBinding INSTANCE = new MathBinding();
 

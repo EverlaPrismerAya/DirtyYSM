@@ -5,7 +5,6 @@ import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.client.gui.AnimationRouletteScreen;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
 import com.elfmcys.yesstevemodel.config.GeneralConfig;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import com.elfmcys.yesstevemodel.util.InputUtil;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -13,10 +12,10 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientRawInputEvent;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.api.client.KeyMappingFactory;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
-import net.everla.dirtyYsm.gui.ModernAnimationRouletteScreen;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.client.KeyMappingFactory;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.gui.ModernAnimationRouletteScreen;
 
 public final class AnimationRouletteKey {
 
@@ -33,7 +32,7 @@ public final class AnimationRouletteKey {
         }
         ClientRawInputEvent.KEY_PRESSED.register((client, keyCode, scanCode, action, modifiers) -> {
             if (YesSteveModel.isAvailable() && InputUtil.isPlayerReady() && action == 1 && InputUtil.isKeyPressed(keyCode, scanCode, KEY_ROULETTE)) {
-                if (!NetworkHandler.isClientConnected() || ServerConfig.CAN_SWITCH_MODEL.get()) {
+                if (!NetworkHandler.isClientConnected() || com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.canSwitchModel()) {
                     if (TouhouLittleMaidCompat.isMaidChatAvailable()) {
                         TouhouLittleMaidCompat.openMaidChat();
                     } else if (Minecraft.getInstance().player != null) {

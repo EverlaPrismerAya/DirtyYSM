@@ -4,7 +4,7 @@ import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public class C2SSyncAnimationExpressionPacket {
 

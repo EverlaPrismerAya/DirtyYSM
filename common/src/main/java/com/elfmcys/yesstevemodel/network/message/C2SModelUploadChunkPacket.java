@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.network.message;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public record C2SModelUploadChunkPacket(long uploadId, int offset, byte[] data) {
 
@@ -17,6 +17,6 @@ public record C2SModelUploadChunkPacket(long uploadId, int offset, byte[] data) 
 
     public static void handle(C2SModelUploadChunkPacket message, PacketContext ctx) {
         if (ctx.isServerSide() && ctx.getSender() != null)
-            ctx.enqueueWork(() -> net.everla.dirtyYsm.server.ModelUploadReceiver.chunk(ctx.getSender(), message));
+            ctx.enqueueWork(() -> net.everla.reimaginedysm.server.ModelUploadReceiver.chunk(ctx.getSender(), message));
     }
 }

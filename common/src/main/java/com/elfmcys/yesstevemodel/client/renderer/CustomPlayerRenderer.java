@@ -2,8 +2,8 @@ package com.elfmcys.yesstevemodel.client.renderer;
 
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
 import com.elfmcys.yesstevemodel.capability.PlayerCapability;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
-import net.everla.dirtyYsm.compat.gun.swarfare.SWarfareCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.gun.swarfare.SWarfareCompat;
 import com.elfmcys.yesstevemodel.client.entity.PlayerPreviewEntity;
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import com.elfmcys.yesstevemodel.client.renderer.layer.CustomPlayerArmorLayer;

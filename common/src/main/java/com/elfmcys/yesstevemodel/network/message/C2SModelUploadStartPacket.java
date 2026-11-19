@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.network.message;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public record C2SModelUploadStartPacket(String modelId, int totalBytes, String sha256) {
 
@@ -17,6 +17,6 @@ public record C2SModelUploadStartPacket(String modelId, int totalBytes, String s
 
     public static void handle(C2SModelUploadStartPacket message, PacketContext ctx) {
         if (ctx.isServerSide() && ctx.getSender() != null)
-            ctx.enqueueWork(() -> net.everla.dirtyYsm.server.ModelUploadReceiver.start(ctx.getSender(), message));
+            ctx.enqueueWork(() -> net.everla.reimaginedysm.server.ModelUploadReceiver.start(ctx.getSender(), message));
     }
 }

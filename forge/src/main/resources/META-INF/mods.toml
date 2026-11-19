@@ -6,7 +6,7 @@ license = "MIT"
 [[mods]]
 modId = "yes_steve_model"
 version = "${version}"
-displayName = "Yes Steve Model"
+displayName = "Reimagined YSM"
 authors = "Original: YS Group, TartaricAcid, TomatoPuddin, AryochiL. Modify: EverlaPrismer Aya"
 description = "A Optimized version of YSM 2.6.5 that Added some QOL features."
 

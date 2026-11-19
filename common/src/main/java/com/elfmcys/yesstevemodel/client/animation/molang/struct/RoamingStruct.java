@@ -28,8 +28,14 @@ public class RoamingStruct implements Struct {
     private RoamingSyncBatch pendingBoneData;
 
     private boolean dirty = false;
+    private final Runnable onChange;
 
     public RoamingStruct(int i, Int2FloatOpenHashMap int2FloatOpenHashMap) {
+        this(i,int2FloatOpenHashMap,()->{});
+    }
+
+    public RoamingStruct(int i, Int2FloatOpenHashMap int2FloatOpenHashMap,Runnable onChange) {
+        this.onChange=onChange;
         this.pendingBoneData = new RoamingSyncBatch(i, 4);
         this.floatVars = int2FloatOpenHashMap;
         this.varNames = new IntOpenHashSet(int2FloatOpenHashMap.keySet());
@@ -47,6 +53,7 @@ public class RoamingStruct implements Struct {
         if (f == this.floatVars.put(name, f)) {
             return;
         }
+        this.onChange.run();
         this.varNames.add(name);
         if (this.varNames.size() > MAX_VARS) {
             return;

@@ -2,11 +2,11 @@ package com.elfmcys.yesstevemodel.client.animation.predicate;
 
 import com.elfmcys.yesstevemodel.client.animation.IAnimationPredicate;
 import com.elfmcys.yesstevemodel.client.animation.condition.ConditionManager;
-import net.everla.dirtyYsm.compat.carryon.CarryOnCompat;
-import net.everla.dirtyYsm.compat.swem.SWEMCompat;
+import net.everla.reimaginedysm.compat.carryon.CarryOnCompat;
+import net.everla.reimaginedysm.compat.swem.SWEMCompat;
 import com.elfmcys.yesstevemodel.client.animation.condition.ConditionChair;
 import com.elfmcys.yesstevemodel.client.entity.LivingAnimatable;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.ILoopType;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.PlayState;

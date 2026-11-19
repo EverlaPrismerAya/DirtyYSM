@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.animation.molang.functions.ysm;
 
-import net.everla.dirtyYsm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
+import net.everla.reimaginedysm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.IContext;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.funciton.entity.LivingEntityFunction;
 import com.elfmcys.yesstevemodel.geckolib3.util.MolangUtils;

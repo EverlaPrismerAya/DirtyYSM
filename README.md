@@ -1,10 +1,10 @@
 ## 说明
 
-DirtyYSM 是一款基于 [Yes Steve Model](https://modrinth.com/mod/yes-steve-model) 的模组，它修改了原版玩家模型，其核心使用 [GeckoLib](https://github.com/bernie-g/geckolib) 库，并采用了 Minecraft 基岩版的模型和动画文件。这使得玩家可以根据自己的喜好自定义玩家模型和动画。
+Reimagined YSM 是一款基于 [Yes Steve Model](https://modrinth.com/mod/yes-steve-model) 的模组，它修改了原版玩家模型，其核心使用 [GeckoLib](https://github.com/bernie-g/geckolib) 库，并采用了 Minecraft 基岩版的模型和动画文件。这使得玩家可以根据自己的喜好自定义玩家模型和动画。
 
 本项目使用可选的C++库实现更快速的渲染，项目位于[OpenYSMDev/openysm.cpp](https://github.com/OpenYSMDev/openysm.cpp)
 
-本项目基于OpenYSM，目标是提供一个在多人模式下优化了网络传输方式，并可以纯客户端模式运行的替代品。
+本项目基于O5penYSM，目标是提供一个在多人模式下优化了网络传输方式，并可以纯客户端模式运行的替代品。
 
 本人不支持，不认可OpenYSM开发组反编译闭源项目并以MIT协议开源的行为。拿着反编译的产物作为把柄要挟别人，这并非开源精神，而是绝对可耻的，对开源精神的亵渎。
 
@@ -12,7 +12,7 @@ DirtyYSM 是一款基于 [Yes Steve Model](https://modrinth.com/mod/yes-steve-mo
 
 此项目诞生的原因仅仅是我受不了YSM没有官方支持的纯客户端模式与模型下载传输优化。
 
-DirtyYSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语言。
+Reimagined YSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语言。
 
 ## 构建
 
@@ -32,7 +32,7 @@ DirtyYSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语言。
 
 静态模型封面、封面网络包、截图缓存和服务端渲染子进程已移除；无需 GPU 或预览运行库。运行时上传和重载继续同步最新目录，并由当前页面及玩家渲染按需请求更新后的模型。旧的 shared_avatar_icons 与 preview_runtime 文件不会再使用，可自行清理。
 
-开发阶段模组与目录协议版本均保持 `2.7.0`，两端仍须使用同次构建。项目自有 Java 包已迁移到 `net.everla.dirtyYsm`，使用旧包名的第三方代码需要更新引用；外部 ImageStream 依赖保留其原始包名。
+开发阶段模组与目录协议版本均保持 `2.7.1`，两端仍须使用同次构建。项目自有 Java 包已迁移到 `net.everla.reimaginedysm`，使用旧包名的第三方代码需要更新引用；外部 ImageStream 依赖保留其原始包名。
 
 相同模型内容哈希的有效缓存跨服务器复用，统一保存到 `config/yes_steve_model/cache/client_shared/`。旧版服务器缓存会在首次使用时按内容哈希查找并迁移，损坏缓存不会当作命中。
 

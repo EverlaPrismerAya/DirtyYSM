@@ -5,7 +5,7 @@ import com.elfmcys.yesstevemodel.RuntimePolicy;
 import com.elfmcys.yesstevemodel.client.event.*;
 import com.elfmcys.yesstevemodel.client.input.*;
 import com.elfmcys.yesstevemodel.client.renderer.RendererManager;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 public final class YsmEventBootstrap {
 

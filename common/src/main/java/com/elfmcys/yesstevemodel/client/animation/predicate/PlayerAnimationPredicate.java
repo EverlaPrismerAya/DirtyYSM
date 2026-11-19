@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.client.animation.predicate;
 
 import com.elfmcys.yesstevemodel.client.animation.IAnimationPredicate;
-import net.everla.dirtyYsm.compat.carryon.CarryOnDataHelper;
+import net.everla.reimaginedysm.compat.carryon.CarryOnDataHelper;
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
 import com.elfmcys.yesstevemodel.geckolib3.core.enums.PlayState;

@@ -18,12 +18,12 @@ public class LoadingStateButton extends Button {
     }
 
     public Component getMessage() {
-        return Component.literal(LoadingStateConfig.LOADING_STATE_POSITION.get().name());
+        return Component.literal(com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(LoadingStateConfig.LOADING_STATE_POSITION).get().name());
     }
 
     public void onPress() {
         LoadingStateConfig.Position stateConfig;
-        switch (LoadingStateConfig.LOADING_STATE_POSITION.get()) {
+        switch (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(LoadingStateConfig.LOADING_STATE_POSITION).get()) {
             case TOP_LEFT:
                 stateConfig = LoadingStateConfig.Position.TOP_CENTER;
                 break;
@@ -45,6 +45,6 @@ public class LoadingStateButton extends Button {
             default:
                 throw new IncompatibleClassChangeError();
         }
-        LoadingStateConfig.LOADING_STATE_POSITION.set(stateConfig);
+        com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(LoadingStateConfig.LOADING_STATE_POSITION).set(stateConfig);
     }
 }

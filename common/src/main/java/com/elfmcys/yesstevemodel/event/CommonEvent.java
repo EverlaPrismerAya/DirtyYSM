@@ -2,8 +2,8 @@ package com.elfmcys.yesstevemodel.event;
 
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.ClientModelManager;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouMaidCompat;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouMaidCompat;
 import com.elfmcys.yesstevemodel.model.ServerModelManager;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import dev.architectury.event.events.common.LifecycleEvent;

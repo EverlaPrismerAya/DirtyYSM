@@ -42,7 +42,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.loading.LoadingModList;
 import org.apache.commons.lang3.tuple.Pair;
-import net.everla.dirtyYsm.api.client.HudOverlay;
+import net.everla.reimaginedysm.api.client.HudOverlay;
 
 import java.util.Optional;
 

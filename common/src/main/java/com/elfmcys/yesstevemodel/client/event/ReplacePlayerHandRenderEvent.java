@@ -19,7 +19,7 @@ public class ReplacePlayerHandRenderEvent {
     }
 
     public static boolean onRenderArm(Player player, HumanoidArm arm, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
-        if (!YesSteveModel.isAvailable() || GeneralConfig.DISABLE_SELF_MODEL.get() || GeneralConfig.DISABLE_SELF_HANDS.get()) {
+        if (!YesSteveModel.isAvailable() || com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_SELF_MODEL).get() || com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.DISABLE_SELF_HANDS).get()) {
             return false;
         }
         if (!(player instanceof LocalPlayer localPlayer)) {

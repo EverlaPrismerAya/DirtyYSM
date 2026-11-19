@@ -8,7 +8,7 @@ import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 import java.util.ArrayList;
 import java.util.List;

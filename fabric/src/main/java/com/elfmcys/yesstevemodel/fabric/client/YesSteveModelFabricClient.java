@@ -9,7 +9,7 @@ import com.elfmcys.yesstevemodel.client.renderer.ModelSyncStateOverlay;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
-import net.everla.dirtyYsm.api.client.HudOverlay;
+import net.everla.reimaginedysm.api.client.HudOverlay;
 
 public final class YesSteveModelFabricClient implements ClientModInitializer {
     @Override

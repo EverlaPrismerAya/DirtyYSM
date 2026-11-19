@@ -16,7 +16,6 @@ import com.elfmcys.yesstevemodel.client.input.AnimationRouletteKey;
 import com.elfmcys.yesstevemodel.client.input.ExtraAnimationKey;
 import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
 import com.elfmcys.yesstevemodel.config.GeneralConfig;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool;
 import com.elfmcys.yesstevemodel.geckolib3.resource.GeckoLibCache;
@@ -56,7 +55,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import net.everla.dirtyYsm.api.client.KeyMappingFactory;
+import net.everla.reimaginedysm.api.client.KeyMappingFactory;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -294,7 +293,7 @@ public class AnimationRouletteScreen extends Screen {
             int iRound2 = Math.round(110.0f / iMax2);
             ConfigCheckBox configCheckBox = new ConfigCheckBox(this.centerX + 127 + (iRound2 * (idx % iMax2)), this.centerY + rowY, iRound2, mutableComponentLiteral2, bool -> {
                 executeExpression(str4, null);
-                if (!GeckoLibCache.isRoamingVariableAssignment(str4) && NetworkHandler.isClientConnected() && !ServerConfig.LOW_BANDWIDTH_USAGE.get().booleanValue()) {
+                if (!GeckoLibCache.isRoamingVariableAssignment(str4) && NetworkHandler.isClientConnected() && !com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.lowBandwidthUsage()) {
                     NetworkHandler.sendToServer(new C2SRequestExecuteMolangPacket(str4, this.animatableModel.getEntity().getId()));
                 }
                 init();
@@ -332,7 +331,7 @@ public class AnimationRouletteScreen extends Screen {
         ConfigCheckBox configCheckBox = new ConfigCheckBox(this.centerX + 125, this.centerY + iArr[0], mutableComponentLiteral, bool -> {
             String str2 = checkboxConfig.getValue() + "=" + (bool.booleanValue() ? "1" : "0");
             executeExpression(str2, null);
-            if (!GeckoLibCache.isRoamingVariableAssignment(str2) && NetworkHandler.isClientConnected() && !ServerConfig.LOW_BANDWIDTH_USAGE.get().booleanValue()) {
+            if (!GeckoLibCache.isRoamingVariableAssignment(str2) && NetworkHandler.isClientConnected() && !com.elfmcys.yesstevemodel.client.ModelLoadingPolicy.lowBandwidthUsage()) {
                 NetworkHandler.sendToServer(new C2SRequestExecuteMolangPacket(str2, this.animatableModel.getEntity().getId()));
             }
         }) {
@@ -469,10 +468,10 @@ public class AnimationRouletteScreen extends Screen {
             if (str2.startsWith(SUBMENU_PREFIX)) {
                 String strSubstring = str2.substring(SUBMENU_PREFIX.length());
                 if (this.renderGroups.containsKey(strSubstring)) {
-                    if (GeneralConfig.ROULETTE_SETTINGS_MODE.get() == GeneralConfig.RouletteSettingsMode.CLASSIC) {
+                    if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.ROULETTE_SETTINGS_MODE).get() == GeneralConfig.RouletteSettingsMode.CLASSIC) {
                         showConfigGroup(strSubstring);
                     } else {
-                        Minecraft.getInstance().setScreen(new net.everla.dirtyYsm.gui.ModelSettingsScreen(this.renderContext, this.animatableModel, this, strSubstring));
+                        Minecraft.getInstance().setScreen(new net.everla.reimaginedysm.gui.ModelSettingsScreen(this.renderContext, this.animatableModel, this, strSubstring));
                     }
                 }
             }
@@ -528,7 +527,7 @@ public class AnimationRouletteScreen extends Screen {
                 cap.requestModelSwitch(str);
             });
         }
-        if (localPlayer != null && GeneralConfig.PRINT_ANIMATION_ROULETTE_MSG.get().booleanValue()) {
+        if (localPlayer != null && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.PRINT_ANIMATION_ROULETTE_MSG).get().booleanValue()) {
             localPlayer.sendSystemMessage(Component.translatable("message.yes_steve_model.model.animation_roulette.play", str));
         }
         Minecraft.getInstance().setScreen(null);

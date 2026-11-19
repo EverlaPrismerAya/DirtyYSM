@@ -4,7 +4,7 @@ import com.elfmcys.yesstevemodel.NativeLibLoader;
 import com.elfmcys.yesstevemodel.audio.AudioCodec;
 import com.elfmcys.yesstevemodel.audio.AudioTrackData;
 import com.elfmcys.yesstevemodel.client.ClientModelInfo;
-import net.everla.dirtyYsm.compat.oculus.ShadersTextureType;
+import net.everla.reimaginedysm.compat.oculus.ShadersTextureType;
 import com.elfmcys.yesstevemodel.client.gui.custom.AbstractConfig;
 import com.elfmcys.yesstevemodel.client.gui.custom.ExtraAnimationButtons;
 import com.elfmcys.yesstevemodel.client.gui.custom.configs.CheckboxConfig;

@@ -121,7 +121,7 @@ public final class NativeLibLoader {
     }
 
     private static boolean loadNativeLib(String path) {
-        if(System.getProperty("OYSM_DISABLE_SMID") != null) {
+        if(System.getProperty("REIMAGINED_YSM_DISABLE_SMID") != null) {
             return false;
         }
         try {

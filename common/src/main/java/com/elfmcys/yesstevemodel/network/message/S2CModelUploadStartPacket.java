@@ -4,7 +4,7 @@ import com.elfmcys.yesstevemodel.client.upload.ModelUploadSession;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public record S2CModelUploadStartPacket(long uploadId, byte status, int chunkSize, int maxTotalBytes, int chunksPerTick, String message) {
     public static void encode(S2CModelUploadStartPacket packet, FriendlyByteBuf buf) {

@@ -7,7 +7,7 @@ import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.IContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.everla.dirtyYsm.compat.oculus.OculusCompat;
+import net.everla.reimaginedysm.compat.oculus.OculusCompat;
 
 public final class CameraUtil {
     public static int getCameraType(IContext<? extends Entity> IContext) {

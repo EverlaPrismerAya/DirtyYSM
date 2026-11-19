@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel.event;
 
 import com.elfmcys.yesstevemodel.YesSteveModel;
 import com.elfmcys.yesstevemodel.client.ClientModelManager;
-import com.elfmcys.yesstevemodel.command.OpenYSMClientCommand;
+import com.elfmcys.yesstevemodel.command.ReimaginedYSMClientCommand;
 import com.elfmcys.yesstevemodel.command.RootClientCommand;
 import com.elfmcys.yesstevemodel.command.RootCommand;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.Animation;
@@ -19,7 +19,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.resources.ResourceLocation;
-import net.everla.dirtyYsm.api.PlatformAPI;
+import net.everla.reimaginedysm.api.PlatformAPI;
 
 import java.util.HashSet;
 import java.util.List;
@@ -64,7 +64,7 @@ public final class CommandRegistry {
                     return SharedSuggestionProvider.suggest(list, suggestionsBuilder);
                 }
             } else if (ClientModelManager.getModelAssemblyMap().containsKey(str)) {
-                List<String> list2 = ClientModelManager.getModelContext(str).map(context -> context.getAnimationBundle().getTextures().getKeys().stream().map(CommandRegistry::escapeIfRequired).collect(Collectors.toList())).orElseGet(Lists::newArrayList);
+                List<String> list2 = ClientModelManager.peekModelContext(str).map(context -> context.getAnimationBundle().getTextures().getKeys().stream().map(CommandRegistry::escapeIfRequired).collect(Collectors.toList())).orElseGet(Lists::newArrayList);
                 list2.add(0, "-");
                 return SharedSuggestionProvider.suggest(list2, suggestionsBuilder);
             }
@@ -77,7 +77,7 @@ public final class CommandRegistry {
             if (!YesSteveModel.isAvailable()) {
                 return;
             }
-            OpenYSMClientCommand.registerClientCommands(dispatcher);
+            ReimaginedYSMClientCommand.registerClientCommands(dispatcher);
         });
         CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
             if (!YesSteveModel.isAvailable()) {

@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.animation.condition;
 
-import net.everla.dirtyYsm.compat.gun.tacz.ConditionTAC;
+import net.everla.reimaginedysm.compat.gun.tacz.ConditionTAC;
 import net.minecraft.world.InteractionHand;
 
 public class ConditionManager {

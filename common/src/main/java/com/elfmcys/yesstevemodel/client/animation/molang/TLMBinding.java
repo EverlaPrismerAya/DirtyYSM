@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.animation.molang;
 
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.binding.ContextBinding;
 import com.elfmcys.yesstevemodel.util.data.LazySupplier;
 

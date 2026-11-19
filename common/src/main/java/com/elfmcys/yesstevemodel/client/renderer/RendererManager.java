@@ -9,8 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-import net.everla.dirtyYsm.api.PlatformAPI;
-import net.everla.dirtyYsm.compat.sbackpack.SBackpackCompat;
+import net.everla.reimaginedysm.api.PlatformAPI;
+import net.everla.reimaginedysm.compat.sbackpack.SBackpackCompat;
 
 public class RendererManager {
 

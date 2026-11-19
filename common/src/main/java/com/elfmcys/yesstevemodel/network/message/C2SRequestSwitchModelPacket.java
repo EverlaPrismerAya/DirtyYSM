@@ -3,10 +3,10 @@ package com.elfmcys.yesstevemodel.network.message;
 import com.elfmcys.yesstevemodel.model.ServerModelManager;
 import com.elfmcys.yesstevemodel.capability.AuthModelsCapability;
 import com.elfmcys.yesstevemodel.capability.ModelInfoCapability;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
+import com.elfmcys.yesstevemodel.config.CommonConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public class C2SRequestSwitchModelPacket {
 
@@ -35,7 +35,7 @@ public class C2SRequestSwitchModelPacket {
         if (ctx.isServerSide()) {
             ctx.enqueueWork(() -> {
                 ServerPlayer sender = ctx.getSender();
-                if (sender != null && ServerConfig.CAN_SWITCH_MODEL.get()) {
+                if (sender != null && CommonConfig.CAN_SWITCH_MODEL.get()) {
                     handleCapability(message, sender);
                 }
             });

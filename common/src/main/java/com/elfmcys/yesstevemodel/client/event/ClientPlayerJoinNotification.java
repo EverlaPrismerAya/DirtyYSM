@@ -18,6 +18,7 @@ public final class ClientPlayerJoinNotification {
     private static final int HANDSHAKE_PROBE_COUNT = 3;
 
     private static boolean notified = false;
+    private static boolean lastForced;
     private static int handshakeProbeIndex = -1;
     private static int handshakeProbeDelay;
     private static int handshakeElapsed;
@@ -27,10 +28,10 @@ public final class ClientPlayerJoinNotification {
     }
 
     private static int handshakeTimeoutTicks() {
-        if (GeneralConfig.HANDSHAKE_TIMEOUT == null) {
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.HANDSHAKE_TIMEOUT) == null) {
             return 100;
         }
-        return Math.max(HANDSHAKE_PROBE_COUNT, (int) Math.round(GeneralConfig.HANDSHAKE_TIMEOUT.get() * 20.0d));
+        return Math.max(HANDSHAKE_PROBE_COUNT, (int) Math.round(com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.HANDSHAKE_TIMEOUT).get() * 20.0d));
     }
 
     private static int probeInterval() {
@@ -43,7 +44,9 @@ public final class ClientPlayerJoinNotification {
         ClientTickEvent.CLIENT_PRE.register(ClientPlayerJoinNotification::onClientTick);
     }
 
-    private static void onPlayerJoin(LocalPlayer player) {
+    private static void onPlayerJoin(LocalPlayer player) { onPlayerJoin(player,false); }
+
+    private static void onPlayerJoin(LocalPlayer player,boolean restart) {
         if (RuntimePolicy.isDisabled()) {
             return;
         }
@@ -53,17 +56,18 @@ public final class ClientPlayerJoinNotification {
         ClientModelManager.runPendingModelCallback();
         ClientModelManager.loadPrivateModels();
         notified = true;
+        lastForced=ClientOnlyMode.isForced();
         if (!YesSteveModel.isAvailable()) {
             YesSteveModel.sendUnavailableMessage();
-            return;
-        }
-        if (Minecraft.getInstance().isLocalServer()) {
             return;
         }
         if (ClientOnlyMode.isForced()) {
             ClientOnlyMode.activateStandalone();
             return;
         }
+        if(Minecraft.getInstance().isLocalServer() && !restart)return;
+        if(restart)NetworkHandler.restartModelSync(player.connection.getConnection());
+        else NetworkHandler.sendVersionCheck(player.connection.getConnection());
         handshakeProbeIndex = 0;
         handshakeProbeDelay = 0;
         handshakeElapsed = 0;
@@ -88,6 +92,10 @@ public final class ClientPlayerJoinNotification {
     }
 
     private static void onClientTick(Minecraft client) {
+        if(client.player!=null && notified && lastForced!=ClientOnlyMode.isForced()) {
+            com.elfmcys.yesstevemodel.client.ClientRoamingState.STORE.flush();
+            ClientModelManager.resetSync();notified=false;onPlayerJoin(client.player,!ClientOnlyMode.isForced());
+        }
         ClientModelManager.applyClientOnlySelection();
         if (handshakeProbeIndex < 0 || client.isLocalServer()) {
             return;
@@ -119,6 +127,7 @@ public final class ClientPlayerJoinNotification {
     }
 
     private static void onPlayerQuit(LocalPlayer player) {
+        com.elfmcys.yesstevemodel.client.ClientRoamingState.STORE.flush();
         handshakeProbeIndex = -1;
         sessionId++;
         if (notified) {

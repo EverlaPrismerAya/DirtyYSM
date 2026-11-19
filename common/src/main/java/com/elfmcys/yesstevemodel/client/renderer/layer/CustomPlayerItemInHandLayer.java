@@ -1,12 +1,12 @@
 package com.elfmcys.yesstevemodel.client.renderer.layer;
 
-import net.everla.dirtyYsm.compat.slashblade.SlashBladeRenderer;
-import net.everla.dirtyYsm.compat.slashblade.SlashBladeCompat;
-import net.everla.dirtyYsm.compat.gun.swarfare.SWarfareCompat;
+import net.everla.reimaginedysm.compat.slashblade.SlashBladeRenderer;
+import net.everla.reimaginedysm.compat.slashblade.SlashBladeCompat;
+import net.everla.reimaginedysm.compat.gun.swarfare.SWarfareCompat;
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import com.elfmcys.yesstevemodel.geckolib3.geo.GeoLayerRenderer;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
-import net.everla.dirtyYsm.compat.gun.tacz.TacCompat;
+import net.everla.reimaginedysm.compat.gun.tacz.TacCompat;
 import com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils;
 import com.elfmcys.yesstevemodel.util.accessors.BufferSourceAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;

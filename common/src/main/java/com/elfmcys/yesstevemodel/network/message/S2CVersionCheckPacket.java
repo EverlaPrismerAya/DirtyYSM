@@ -4,12 +4,12 @@ import com.elfmcys.yesstevemodel.client.ClientModelManager;
 import com.elfmcys.yesstevemodel.client.ClientOnlyMode;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 public class S2CVersionCheckPacket {
 
-    private static final String OPEN_YSM_BRAND = "open_ysm:v1";
-    private static final String MODEL_SYNC_FRAGMENT_BRAND = "open_ysm:model_sync_fragments_v1";
+    private static final String REIMAGINED_YSM_BRAND = "reimagined_ysm:v1";
+    private static final String MODEL_SYNC_FRAGMENT_BRAND = "reimagined_ysm:model_sync_fragments_v1";
 
     private final String version;
     private final boolean supportsModelSyncFragments;
@@ -28,12 +28,12 @@ public class S2CVersionCheckPacket {
         boolean supportsModelSyncFragments = false;
         if(buf.readableBytes() > 0){
             String brand = buf.readUtf();
-            if(brand.equals(OPEN_YSM_BRAND)){
-                ClientModelManager.setOysmServer(true);
+            if(brand.equals(REIMAGINED_YSM_BRAND)){
+                ClientModelManager.setReimaginedYsmServer(true);
                 ClientModelManager.setAllowUpload(buf.readBoolean());
             } else if (brand.equals(MODEL_SYNC_FRAGMENT_BRAND)) {
                 supportsModelSyncFragments = true;
-                if (buf.isReadable()) { ClientModelManager.setOysmServer(true); ClientModelManager.setAllowUpload(buf.readBoolean()); }
+                if (buf.isReadable()) { ClientModelManager.setReimaginedYsmServer(true); ClientModelManager.setAllowUpload(buf.readBoolean()); }
             }
         }
         return new S2CVersionCheckPacket(version, supportsModelSyncFragments);
@@ -48,6 +48,10 @@ public class S2CVersionCheckPacket {
     }
 
     public static void handle(S2CVersionCheckPacket message, PacketContext ctx) {
+        if (!NetworkHandler.VERSION.equals(message.version)) {
+            ctx.enqueueWork(() -> ctx.getConnection().disconnect(net.minecraft.network.chat.Component.literal("Reimagined YSM protocol mismatch: expected " + NetworkHandler.VERSION + ", received " + message.version)));
+            return;
+        }
         NetworkHandler.setServerSupportsModelSyncFragments(message.supportsModelSyncFragments);
         if (NetworkHandler.setChannelVersion(ctx.getConnection(), message.version)) {
             ctx.enqueueWork(() -> {

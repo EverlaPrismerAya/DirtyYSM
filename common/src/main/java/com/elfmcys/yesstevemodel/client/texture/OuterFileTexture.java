@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.texture;
 
-import net.everla.dirtyYsm.compat.oculus.ShadersTextureType;
+import net.everla.reimaginedysm.compat.oculus.ShadersTextureType;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;

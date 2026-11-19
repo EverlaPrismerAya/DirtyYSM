@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.geckolib3.geo.animated;
 
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouMaidBoneProcessor;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouMaidBoneProcessor;
 import com.elfmcys.yesstevemodel.geckolib3.core.processor.IBone;
 import com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoBone;
 import org.joml.Vector3f;

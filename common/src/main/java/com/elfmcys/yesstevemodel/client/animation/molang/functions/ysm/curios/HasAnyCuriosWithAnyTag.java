@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.client.animation.molang.functions.ysm.curios;
 
-import net.everla.dirtyYsm.compat.curios.CuriosCompat;
+import net.everla.reimaginedysm.compat.curios.CuriosCompat;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.context.IContext;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.funciton.entity.LivingEntityFunction;
 import com.elfmcys.yesstevemodel.molang.runtime.ExecutionContext;

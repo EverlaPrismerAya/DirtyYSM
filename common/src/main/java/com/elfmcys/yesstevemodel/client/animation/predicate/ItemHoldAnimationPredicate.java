@@ -2,8 +2,8 @@ package com.elfmcys.yesstevemodel.client.animation.predicate;
 
 import com.elfmcys.yesstevemodel.client.animation.IAnimationPredicate;
 import com.elfmcys.yesstevemodel.client.animation.condition.ConditionManager;
-import net.everla.dirtyYsm.compat.ironsspellbooks.SpellbooksCompat;
-import net.everla.dirtyYsm.compat.slashblade.SlashBladeCompat;
+import net.everla.reimaginedysm.compat.ironsspellbooks.SpellbooksCompat;
+import net.everla.reimaginedysm.compat.slashblade.SlashBladeCompat;
 import com.elfmcys.yesstevemodel.client.entity.LivingAnimatable;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.ILoopType;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;

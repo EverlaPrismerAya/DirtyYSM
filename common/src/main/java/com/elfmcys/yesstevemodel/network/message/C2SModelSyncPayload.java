@@ -3,7 +3,7 @@ package com.elfmcys.yesstevemodel.network.message;
 import com.elfmcys.yesstevemodel.model.ServerModelManager;
 import com.elfmcys.yesstevemodel.util.YSMThreadPool;
 import net.minecraft.network.FriendlyByteBuf;
-import net.everla.dirtyYsm.api.network.PacketContext;
+import net.everla.reimaginedysm.api.network.PacketContext;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;

@@ -1,7 +1,7 @@
 package com.elfmcys.yesstevemodel.client.renderer.layer;
 
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
-import net.everla.dirtyYsm.compat.simplehats.SimpleHatsHelper;
+import net.everla.reimaginedysm.compat.simplehats.SimpleHatsHelper;
 import com.elfmcys.yesstevemodel.geckolib3.geo.GeoLayerRenderer;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
 import com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils;

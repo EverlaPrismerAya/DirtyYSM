@@ -1,6 +1,6 @@
 package com.elfmcys.yesstevemodel.geckolib3.util.json;
 
-import net.everla.dirtyYsm.compat.oculus.ShadersTextureType;
+import net.everla.reimaginedysm.compat.oculus.ShadersTextureType;
 import com.elfmcys.yesstevemodel.client.texture.OuterFileTexture;
 import com.elfmcys.yesstevemodel.util.data.OrderedStringMap;
 import com.google.gson.JsonElement;

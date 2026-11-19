@@ -2,7 +2,7 @@ package com.elfmcys.yesstevemodel.util;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.everla.dirtyYsm.api.client.KeyMappingFactory;
+import net.everla.reimaginedysm.api.client.KeyMappingFactory;
 
 public class InputUtil {
     public static boolean isKeyPressed(int keyCode, int scanCode, KeyMapping keyMapping) {

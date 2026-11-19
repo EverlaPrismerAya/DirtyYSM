@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "yes_steve_model",
   "version": "${version}",
-  "name": "Yes Steve Model",
+  "name": "Reimagined YSM",
   "description": "A Optimized version of YSM 2.6.5 that Added some QOL features.",
   "authors": [
     "Original: YS Group, TartaricAcid, TomatoPuddin, AryochiL. Modify: EverlaPrismer Aya"

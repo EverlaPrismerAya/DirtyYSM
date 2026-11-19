@@ -6,7 +6,7 @@ import com.elfmcys.yesstevemodel.capability.ModelInfoCapability;
 import com.elfmcys.yesstevemodel.capability.ProjectileModelCapability;
 import com.elfmcys.yesstevemodel.capability.StarModelsCapability;
 import com.elfmcys.yesstevemodel.capability.VehicleModelCapability;
-import com.elfmcys.yesstevemodel.config.ServerConfig;
+import com.elfmcys.yesstevemodel.config.CommonConfig;
 import com.elfmcys.yesstevemodel.model.ServerModelManager;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import com.elfmcys.yesstevemodel.network.message.S2CSetModelAndTexturePacket;
@@ -15,7 +15,7 @@ import com.elfmcys.yesstevemodel.network.message.S2CSyncProjectileModelPacket;
 import com.elfmcys.yesstevemodel.network.message.S2CSyncStarModelsPacket;
 import com.elfmcys.yesstevemodel.network.message.S2CSyncVehicleModelPacket;
 import com.elfmcys.yesstevemodel.network.message.S2CVersionCheckPacket;
-import net.everla.dirtyYsm.api.capability.CapabilityLifecycle;
+import net.everla.reimaginedysm.api.capability.CapabilityLifecycle;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -96,11 +96,12 @@ public final class CapabilityEvent {
     }
 
     private static void onServerTick(MinecraftServer server) {
+        if (YesSteveModel.isAvailable()) ServerModelManager.syncLoadingMode(server);
         if (!YesSteveModel.isAvailable()) {
             return;
         }
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
-        Boolean bool = ServerConfig.LOW_BANDWIDTH_USAGE.get();
+        Boolean bool = CommonConfig.LOW_BANDWIDTH_USAGE.get();
         for (ServerPlayer serverPlayer : players) {
             getModelInfoCap(serverPlayer).ifPresent(cap -> {
                 if (!NetworkHandler.isPlayerConnected(serverPlayer) && !cap.isMandatory()) {

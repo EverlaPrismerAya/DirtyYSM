@@ -12,7 +12,7 @@ public final class PlayerLogoutEvent {
 
     public static void register() {
         PlayerEvent.PLAYER_QUIT.register(player -> {
-            net.everla.dirtyYsm.server.ModelUploadReceiver.cancel(player.getUUID());
+            net.everla.reimaginedysm.server.ModelUploadReceiver.cancel(player.getUUID());
             NetworkHandler.clearClientModelSyncFragments(player.getUUID());
             if (!YesSteveModel.isAvailable()) {
                 return;

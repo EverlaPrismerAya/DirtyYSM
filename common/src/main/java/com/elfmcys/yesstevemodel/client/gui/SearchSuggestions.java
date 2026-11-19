@@ -15,9 +15,9 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import org.apache.commons.lang3.StringUtils;
-import net.everla.dirtyYsm.gpu.BlurStack;
-import net.everla.dirtyYsm.gpu.GpuCapability;
-import net.everla.dirtyYsm.pinyin.PinyinMatcher;
+import net.everla.reimaginedysm.gpu.BlurStack;
+import net.everla.reimaginedysm.gpu.GpuCapability;
+import net.everla.reimaginedysm.pinyin.PinyinMatcher;
 
 import java.util.*;
 
@@ -165,10 +165,10 @@ public class SearchSuggestions {
     }
 
     private static int maxVisible() {
-        if (GeneralConfig.SEARCH_SUGGESTION_COUNT == null) {
+        if (com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.SEARCH_SUGGESTION_COUNT) == null) {
             return 8;
         }
-        return (int) Math.round(GeneralConfig.SEARCH_SUGGESTION_COUNT.get());
+        return (int) Math.round(com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.SEARCH_SUGGESTION_COUNT).get());
     }
 
     public boolean isVisible() {
@@ -321,7 +321,7 @@ public class SearchSuggestions {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0.0f, 0.0f, 500.0f);
 
-        boolean blurred = GeneralConfig.BLUR_GUI.get() && GpuCapability.isAvailable();
+        boolean blurred = com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.BLUR_GUI).get() && GpuCapability.isAvailable();
         if (blurred) {
             BlurStack.pushBlur(left, top, width, height, 3.0f, 16.0f, 0xFF4F4F4F);
             BlurStack.flush(guiGraphics);

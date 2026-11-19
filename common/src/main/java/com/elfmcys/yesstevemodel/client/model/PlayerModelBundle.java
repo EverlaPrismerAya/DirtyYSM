@@ -6,7 +6,7 @@ import com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.controllers.FirstPersonArmAnimationController;
 import com.elfmcys.yesstevemodel.geckolib3.core.controller.controllers.PlayerAnimationController;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.AnimationController;
-import net.everla.dirtyYsm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
+import net.everla.reimaginedysm.compat.touhoulittlemaid.TouhouLittleMaidCompat;
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import com.elfmcys.yesstevemodel.client.entity.PlayerGeoEntity;
 import com.elfmcys.yesstevemodel.geckolib3.core.builder.Animation;
