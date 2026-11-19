@@ -803,6 +803,9 @@ public final class ServerModelManager {
 
         SourceSnapshot current = new SourceSnapshot();
         MessageDigest aggregate = newSha256();
+        // Source bytes alone cannot validate geometry baked by an older parser.
+        aggregate.update(net.everla.ysmPhysLib.PhysParameters.GEOMETRY_CACHE_KEY.getBytes(StandardCharsets.UTF_8));
+        aggregate.update((byte) 0);
         if (Files.isRegularFile(source)) {
             addSourceFile(source, "$", previous, current, aggregate);
         } else {

@@ -443,6 +443,7 @@ public class YSMClientMapper {
             return buildMesh(new GeoBone[0], new HashMap<>(), context, fallbackArray);
         }
 
+        boolean hasPhysics = rawGeo.bones.stream().anyMatch(b -> b.name.startsWith("ysmPhys"));
         List<GeoBone> geoBones = new ArrayList<>();
         List<GeoModel.BakedBone> bakedBones = new ArrayList<>();
         Map<String, String> parentMap = new HashMap<>();
@@ -465,11 +466,24 @@ public class YSMClientMapper {
             boolean forceCull = allCutout;
 
             for (RawYsmModel.RawCube rc : rb.cubes) {
+                if (hasPhysics) {
+                    float[] physicsFaces = new float[rc.faces.size() * 12];
+                    int physicsOffset = 0;
+                    for (RawYsmModel.RawFace face : rc.faces) {
+                        for (int v = 0; v < 4; v++) {
+                            System.arraycopy(face.positions[v], 0, physicsFaces, physicsOffset, 3);
+                            physicsOffset += 3;
+                        }
+                    }
+                    bb.physicsFaces.add(physicsFaces);
+                }
                 GeoModel.BakedCube bc = new GeoModel.BakedCube();
                 int validFaceCount = 0;
                 boolean cubeHasHole = false;
 
                 for (RawYsmModel.RawFace rf : rc.faces) {
+                    if (net.everla.ysmPhysLib.PhysParameters.isCollider(rb.name)
+                            && java.util.Arrays.stream(new double[]{rf.u[0],rf.u[1],rf.u[2],rf.u[3],rf.v[0],rf.v[1],rf.v[2],rf.v[3]}).allMatch(uv -> uv == -1)) continue;
                     int faceState = scanner != null ? scanner.scan(rf) : TranslucencyScanner.FLAG_VISIBLE;
 
                     if ((faceState & TranslucencyScanner.FLAG_VISIBLE) == 0) {
@@ -560,6 +574,8 @@ public class YSMClientMapper {
         GeoModel mesh = buildMesh(geoBones.toArray(new GeoBone[0]), parentMap, context, translucencyArray);
 
         mesh.bakedBones = bakedBones;
+        if (hasPhysics) mesh.ysmPhysics = new net.everla.ysmPhysLib.PhysDefinition(mesh,
+                message -> com.elfmcys.yesstevemodel.YesSteveModel.LOGGER.warn("[ysmPhys] {}: {}", rawGeo.identifier, message));
         if (NativeLibLoader.isLoaded()) mesh.buildNativeCache();
         return mesh;
     }

@@ -120,3 +120,15 @@ tasks.register('checkModelLoading', JavaExec) {
     doFirst { workingDir.mkdirs() }
 }
 tasks.named('check') { dependsOn 'checkModelLoading' }
+
+tasks.register('checkYsmPhysics', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass = 'net.everla.ysmPhysLib.PhysCheck'
+    systemProperty 'ysm.physicsExample', rootProject.file('docs/examples/ysmPhys-demo').absolutePath
+    if (project.hasProperty('physicsModel')) systemProperty 'ysm.physicsModel', project.property('physicsModel')
+    enableAssertions = true
+    jvmArgs '-Djava.awt.headless=true'
+}
+
+tasks.named('check') { dependsOn 'checkYsmPhysics' }

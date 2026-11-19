@@ -621,6 +621,21 @@ public class YSMFolderDeserializer implements AutoCloseable {
                                 bakeFaceToRaw(cube, fakeUvObj, "down", "down", mirror, cx, cy, cz, cw, ch, cd, geo.textureWidth, geo.textureHeight, new Vector3f(0, -1, 0), cubeBakeMat, cubeNormalMat);
                             }
                         }
+                        // Collision volumes exist independently of UV faces. Preserve missing
+                        // faces in the existing raw/wire geometry with a reserved invisible UV.
+                        if (net.everla.ysmPhysLib.PhysParameters.isCollider(bone.name)) {
+                            String[] sides={"north","south","east","west","up","down"};
+                            Vector3f[] normals={new Vector3f(0,0,-1),new Vector3f(0,0,1),new Vector3f(1,0,0),new Vector3f(-1,0,0),new Vector3f(0,1,0),new Vector3f(0,-1,0)};
+                            JsonObject absent=new JsonObject();
+                            for(String side:sides) absent.add(side,createFaceUVNode(-geo.textureWidth,-geo.textureHeight,0,0));
+                            RawYsmModel.RawCube solid=new RawYsmModel.RawCube();
+                            for(int side=0;side<sides.length;side++)
+                                bakeFaceToRaw(solid,absent,sides[side],sides[side],false,cx,cy,cz,cw,ch,cd,geo.textureWidth,geo.textureHeight,normals[side],cubeBakeMat,cubeNormalMat);
+                            for(var face:solid.faces) {
+                                boolean present=cube.faces.stream().anyMatch(f -> java.util.Arrays.equals(f.normal,face.normal));
+                                if(!present) cube.faces.add(face);
+                            }
+                        }
                         bone.cubes.add(cube);
                     }
                 }
@@ -1084,6 +1099,13 @@ public class YSMFolderDeserializer implements AutoCloseable {
     private String calculateFinalFolderHash() {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
+            if (model.mainEntity.mainModel != null && model.mainEntity.mainModel.bones.stream()
+                    .anyMatch(b -> net.everla.ysmPhysLib.PhysParameters.isCollider(b.name))) {
+                // Give regenerated solid collision geometry its own server/client payload
+                // identity. Otherwise valid old encrypted payloads win after catalog rebuild.
+                digest.update(net.everla.ysmPhysLib.PhysParameters.GEOMETRY_CACHE_KEY.getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+            }
             for (Map.Entry<String, String> entry : readFilesMd5Map.entrySet()) {
                 digest.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
                 digest.update(entry.getValue().getBytes(StandardCharsets.UTF_8));

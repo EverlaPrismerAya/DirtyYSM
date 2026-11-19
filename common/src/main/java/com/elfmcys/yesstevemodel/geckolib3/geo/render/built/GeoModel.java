@@ -96,6 +96,8 @@ public class GeoModel {
 
     public List<BakedBone> bakedBones;
 
+    public net.everla.ysmPhysLib.PhysDefinition ysmPhysics;
+
     public static class BakedBone {
         public String name;
         public boolean glow;
@@ -103,6 +105,8 @@ public class GeoModel {
         public float pivotX, pivotY, pivotZ;
         public float rotX, rotY, rotZ;
         public List<BakedCube> cubes = new ObjectArrayList<>();
+        // Unfiltered baked cube faces: collision must not depend on texture transparency.
+        public List<float[]> physicsFaces = new ObjectArrayList<>();
         public int partMask;
     }
 

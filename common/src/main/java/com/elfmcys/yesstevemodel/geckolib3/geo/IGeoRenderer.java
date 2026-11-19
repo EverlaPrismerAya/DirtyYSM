@@ -23,6 +23,7 @@ public interface IGeoRenderer<T extends AnimatableEntity<?>> {
     default void renderWithBone(AnimatedGeoModel model, T animatable, float partialTick, PoseStack poseStack, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer vertexConsumer, int packedLight, int packedOverlayIn, float red, float green, float blue, float alpha) {
         setCurrentRTB(bufferSource);
         renderEarly(animatable, poseStack, partialTick, bufferSource, vertexConsumer, packedLight, packedOverlayIn, red, green, blue, alpha);
+        net.everla.ysmPhysLib.PlayerPhysics.render(model, animatable, partialTick, poseStack.last().pose());
         renderLate(animatable, poseStack, partialTick, bufferSource, vertexConsumer, packedLight, packedOverlayIn, red, green, blue, alpha);
     }
 
@@ -31,6 +32,7 @@ public interface IGeoRenderer<T extends AnimatableEntity<?>> {
             vertexConsumer = bufferSource.getBuffer(renderType);
         }
         animatable.resetAnimationState();
+        net.everla.ysmPhysLib.PlayerPhysics.render(model, animatable, partialTick, poseStack.last().pose());
         ResourceLocation tex = animatable.getTextureLocation();
         NativeModelRenderer.renderMesh(vertexConsumer, poseStack.last(), model.getGeoModel(), model.getMatrixData(), model.getAbsPivotData(), i, 0, i2, i3, f2, f3, f4, f5, tex);
         setCurrentModelRenderCycle(EModelRenderCycle.REPEATED);

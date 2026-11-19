@@ -18,6 +18,8 @@ import java.util.List;
 
 public class AnimatedGeoModel {
 
+    public net.everla.ysmPhysLib.PhysSimulation ysmPhysics;
+
     private static final int MATRIX_STRIDE = 12;
 
     private static final int ABS_PIVOT_DATA_STRIDE = 4;

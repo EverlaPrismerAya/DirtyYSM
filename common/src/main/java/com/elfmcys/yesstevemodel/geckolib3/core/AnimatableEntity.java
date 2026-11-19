@@ -218,6 +218,7 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
 
     @Nullable
     public AnimationEvent<?> processAnimationImpl(float partialTick, boolean z) {
+        net.everla.ysmPhysLib.PlayerPhysics.beforeAnimation(this.currentModel);
         if (this.currentModel == null) {
             return null;
         }
