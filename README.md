@@ -32,9 +32,11 @@ Forge 客户端增加官方 YSM 2.6.5 的 `2.6.0` 协议适配；本模组之间
 
 可在配置启用纯客户端模式，启用后本地的一切模型均将在客户端模式下运行。
 
-## Goety / GR 饰品叠加层（Forge）
+## 诡厄巫法 / 诡厄巫法：启示录 饰品叠加层（仅Forge）
 
-参照 [showmeurhalo](https://github.com/EverlaPrismerAya/showmeurhalo) 的饰品渲染实现，原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。饰品跟随 YSM 头部定位骨骼。
+原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。
+
+可添加特殊定位组 `HaloLocator`（不洁圣冠、破碎之环、晋升之环）和 `OdamaneHaloLocator`（终末之环）。饰品使用定位组的枢轴位置、旋转、缩放，并继承全部父级变换。缺少对应定位组时，前三者沿用头部定位，终末之环沿用身体主骨骼。
 
 模型动画、控制器或 Molang 函数中通过 `ysm.has_any_curios` 检测如上某个饰品 ID 时，该饰品将交由模型自行显示；标签查询 `has_any_curios_with_all_tags` / `has_any_curios_with_any_tag` 同样参与避让。
 

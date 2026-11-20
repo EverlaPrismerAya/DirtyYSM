@@ -39,6 +39,9 @@ public class AnimatedGeoModel {
     @NotNull
     private final List<IBone> headBones;
 
+    private final List<IBone> haloBones;
+    private final List<IBone> odamaneHaloBones;
+
     @NotNull
     private final List<IBone> leftHandBones;
 
@@ -106,6 +109,8 @@ public class AnimatedGeoModel {
         }
         this.boneIdsMap = Int2ReferenceMaps.unmodifiable(boneIdsMap);
         this.headBones = lookupBones(data.headIds);
+        this.haloBones = lookupLocator("HaloLocator");
+        this.odamaneHaloBones = lookupLocator("OdamaneHaloLocator");
         this.leftHandBones = lookupBones(data.leftHandIds);
         this.rightHandBones = lookupBones(data.rightHandIds);
         this.elytraBones = lookupBones(data.elytraIds);
@@ -131,6 +136,24 @@ public class AnimatedGeoModel {
         intList.forEach(i -> referenceArrayList.add(this.boneIdsMap.get(i)));
         return ReferenceLists.unmodifiable(referenceArrayList);
     }
+
+    private List<IBone> lookupLocator(String name) {
+        var bones = this.geoModel.topLevelBones();
+        for (int i = 0; i < bones.size(); i++) {
+            if (!bones.get(i).getName().equals(name)) continue;
+            var chain = new java.util.ArrayList<IBone>();
+            for (int index = i; index >= 0; index = bones.get(index).parentIdx) {
+                chain.add(this.boneIdsMap.get(bones.get(index).getBoneId()));
+            }
+            java.util.Collections.reverse(chain);
+            return List.copyOf(chain);
+        }
+        return List.of();
+    }
+
+    public List<IBone> haloBones() { return this.haloBones; }
+
+    public List<IBone> odamaneHaloBones() { return this.odamaneHaloBones; }
 
     public float[] getMatrixData() {
         return this.matrixData;

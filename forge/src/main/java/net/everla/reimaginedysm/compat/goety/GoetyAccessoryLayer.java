@@ -97,14 +97,19 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
                 int priority = haloPriority(id);
                 if (priority > 0 && priority < equippedHalo) continue;
                 boolean bodyHalo = id.getPath().equals("halo_of_the_end");
-                if (!bodyHalo && model.headBones().isEmpty()) continue;
+                var locator = bodyHalo ? model.odamaneHaloBones() : model.haloBones();
+                if (locator.isEmpty() && !bodyHalo && model.headBones().isEmpty()) continue;
                 poses.pushPose();
                 try {
-                    if (bodyHalo) {
+                    if (!locator.isEmpty()) {
+                        if (RenderUtils.prepMatrixForLocator(poses, locator)) continue;
+                        var tip = locator.get(locator.size() - 1);
+                        if (tip.getScaleX() == 0 || tip.getScaleY() == 0 || tip.getScaleZ() == 0) continue;
+                    } else if (bodyHalo) {
                         if (prepareBody(poses, model)) continue;
                         // GR renders relative to vanilla's head origin, 24 model pixels above the feet.
                         // Apply this in body space, before converting YSM's axes to vanilla model axes.
-                        poses.translate(0, 24.0 / 16.0, 0);
+                        poses.translate(0, 24.0 / 16.0 + 0.3, 0);
                     } else if (RenderUtils.prepMatrixForLocator(poses, model.headBones())) continue;
                     poses.scale(-1, -1, 1);
                     rendering = id.getPath().equals("halo_of_the_end");
