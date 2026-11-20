@@ -4,7 +4,7 @@ Reimagined YSM 是一款基于 [Yes Steve Model](https://modrinth.com/mod/yes-st
 
 本项目使用可选的C++库实现更快速的渲染，项目位于[OpenYSMDev/openysm.cpp](https://github.com/OpenYSMDev/openysm.cpp)
 
-本项目基于O5penYSM，目标是提供一个在多人模式下优化了网络传输方式，并可以纯客户端模式运行的替代品。
+本项目基于OpenYSM，目标是提供一个在多人模式下优化了网络传输方式，并可以纯客户端模式运行的替代品。
 
 本人不支持，不认可OpenYSM开发组反编译闭源项目并以MIT协议开源的行为。拿着反编译的产物作为把柄要挟别人，这并非开源精神，而是绝对可耻的，对开源精神的亵渎。
 
