@@ -79,17 +79,22 @@ Head
       └─ ysmPhysEnd@hair_end
 ```
 
-## 模组联动
+## 新增模组联动
 
 ### 诡厄巫法 / 诡厄巫法：启示录 饰品叠加层（仅Forge）
 
-原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。
+支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。
 
 可添加特殊定位组 `HaloLocator`（不洁圣冠、破碎之环、晋升之环）和 `OdamaneHaloLocator`（终末之环）。饰品使用定位组的枢轴位置、旋转、缩放，并继承全部父级变换。缺少对应定位组时，前三者沿用头部定位，终末之环沿用身体主骨骼。
 
 模型动画、控制器或 Molang 函数中通过 `ysm.has_any_curios` 检测如上某个饰品 ID 时，该饰品将交由模型自行显示；标签查询 `has_any_curios_with_all_tags` / `has_any_curios_with_any_tag` 同样参与避让。
 
 同时安装 showmeurhalo 时关闭其反射式 YSM 头部适配，并跳过它对已由原生层接管玩家的这些饰品的重复渲染；其他功能保留。
+
+### Youkai’s Homecoming 头饰兼容（仅Forge）
+
+允许玩家模型叠加此模组的发饰何头饰。模型存在 `YoukaiHeadLocator` 时，优先使用其枢轴位置、旋转、缩放和父级变换；缺少时使用默认头部骨骼。
+
 
 ## 构建
 

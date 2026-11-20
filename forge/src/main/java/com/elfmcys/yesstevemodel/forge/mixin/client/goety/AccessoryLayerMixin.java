@@ -12,6 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AccessoryLayerMixin {
     @Inject(method = "<init>", at = @At("RETURN"))
     private void ysm$accessories(CallbackInfo ci) {
+        if (ModList.get().isLoaded("youkaishomecoming")) {
+            ((CustomPlayerRenderer) (Object) this).addLayerRenderer(
+                    new net.everla.reimaginedysm.compat.youkai.YoukaiHeadLayer());
+        }
         if (ModList.get().isLoaded("curios") && (ModList.get().isLoaded("goety")
                 || ModList.get().isLoaded("goety_revelation"))) {
             ((CustomPlayerRenderer) (Object) this).addLayerRenderer(new GoetyAccessoryLayer());
