@@ -239,7 +239,7 @@ public final class GpuPhysics {
             clock.advance(time,paused,world,x,y,z,fps,rootJump);
             // Contact islands have already been solved on CPU; no readback or
             // duplicate collision solve is needed when building the final matrices.
-            kernel.solve(parameters,root,renderRoot,List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,light);
+            kernel.solve(parameters,root,renderRoot,List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,light,clock.alpha());
             drawn=time;
         }
     }
@@ -252,6 +252,7 @@ public final class GpuPhysics {
         boolean reset;
         final Vector3f velocity=new Vector3f();
         final Map<Integer,Vector3f> roots=new HashMap<>();
+        float alpha() {return (float)Math.max(0,Math.min(1,accumulator*fps));}
         void advance(double time,boolean paused,Object world,double x,double y,double z,int fps,boolean rootJump) {
             double elapsed=Double.isFinite(last)?Math.max(0,time-last):0;
             Vector3f shift=new Vector3f((float)(originX-x),(float)(originY-y),(float)(originZ-z));

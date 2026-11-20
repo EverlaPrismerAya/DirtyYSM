@@ -6,7 +6,7 @@ struct Bone { vec4 pivot; ivec4 links; vec4 params; vec4 extra; ivec4 meta; };
 struct Node {
     vec4 position; vec4 velocity; vec4 target; vec4 rotation;
     vec4 source; vec4 desired; mat4 animated; mat4 actual;
-    vec4 euler; ivec4 visible;
+    vec4 previousRotation; ivec4 visible;
 }; // 256 bytes, shared by the Java packer and the offscreen check.
 struct Face { vec4 a; vec4 b; vec4 c; vec4 d; vec4 normal; };
 struct Collider { vec4 lo; vec4 hi; ivec4 info; Face faces[6]; };
@@ -17,7 +17,7 @@ layout(std430,binding=2) readonly buffer Animation { float animation[]; };
 layout(std430,binding=3) buffer State { Node nodes[]; };
 layout(std430,binding=4) readonly buffer Contacts { Collider colliders[]; };
 uniform int boneCount, treeCount, colliderCount, steps, resetState, packedLight, matrixOnly;
-uniform float dt;
+uniform float dt, renderAlpha;
 uniform vec3 frameVelocity;
 uniform mat4 root, renderRoot;
 int offset, stateOffset, tree;
@@ -350,7 +350,12 @@ void writeMatrices() {
     for(int i=0;i<boneCount;i++) {
         int parent=bones[i].links.x;
         vec3 e=animRotation(i);
-        if(bones[i].links.w>=-1 && belongs(i)) {vec3 candidate=qeuler(normalize(qmul(rotation(i),qzyx(e))));if(finite3(candidate)) e=candidate;}
+        if(bones[i].links.w>=-1 && belongs(i)) {
+            vec4 previous=nodes[idx(i)].previousRotation, current=rotation(i);
+            if(dot(previous,current)<0) current=-current;
+            vec4 displayed=normalize(mix(previous,current,renderAlpha));
+            vec3 candidate=qeuler(normalize(qmul(displayed,qzyx(e))));if(finite3(candidate)) e=candidate;
+        }
         mat4 local=localMatrix(i,e);
         mat4 actual=(parent<0?mat4(1):nodes[idx(parent)].actual)*local;nodes[idx(i)].actual=actual;
         mat4 transform=renderRoot*actual;
@@ -385,8 +390,10 @@ void main() {
     }
     if(reset) for(int i=0;i<boneCount;i++) {
         nodes[idx(i)].position.xyz=target(i);nodes[idx(i)].velocity=vec4(0);nodes[idx(i)].rotation=vec4(0,0,0,1);
+        nodes[idx(i)].previousRotation=vec4(0,0,0,1);
     }
     if(!reset) for(int step=0;step<steps;step++) {
+        for(int i=0;i<boneCount;i++) nodes[idx(i)].previousRotation=rotation(i);
         integrate();for(int iteration=0;iteration<8;iteration++) {constrain();collide();}constrain();
     }
     writeMatrices();

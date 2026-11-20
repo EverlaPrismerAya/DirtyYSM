@@ -295,13 +295,22 @@ public final class PhysCheck {
             }
             assert maxLateChange<.05f : "steady flight twitch: "+fps+" FPS "+maxLateChange;
         }
-        // Dynamic state must correspond to the rotations actually sent to all renderers.
+        // Rendering interpolates the previous/current solved corrections without advancing state.
         m=single("g=9.8,s=0,a=180");d=definition(m);sim=new PhysSimulation(d);p=parameters(m);
+        sim.setFrameRate(60);
         var root=new Matrix4f().rotateY(.4f).scale(1,1.5f,.8f);
-        for(int i=0;i<=30;i++) sim.update(p,root,i/60.0,false,WORLD,0,0,0);
+        for(int i=0;i<30;i++) sim.update(p,root,i/60.0,false,WORLD,0,0,0);
+        var previousTip=sim.position(1);
+        sim.update(p,root,.5,false,WORLD,0,0,0);
         var actual=com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils.prepMatrixForBone(d.bones.get(0),new Matrix4f(root),p,0);
         var renderedTip=actual.transformPosition(d.pivot(1));
-        assert renderedTip.distance(sim.position(1))<.002 : "rendered bone does not follow simulation: "+renderedTip+" vs "+sim.position(1);
+        assert renderedTip.distance(previousTip)<.002 : "alpha zero did not display previous solved pose";
+        var currentTip=sim.position(1);
+        sim.update(p,root,.5+1/120.0,false,WORLD,0,0,0);
+        var midpoint=com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils.prepMatrixForBone(d.bones.get(0),new Matrix4f(root),p,0).transformPosition(d.pivot(1));
+        assert sim.position(1).distance(currentTip)<1e-7 : "interpolation advanced solver";
+        assert midpoint.distance(previousTip)>1e-5 && midpoint.distance(currentTip)>1e-5 : "no intermediate rendered pose";
+        assert midpoint.distance(previousTip)<previousTip.distance(currentTip) && midpoint.distance(currentTip)<previousTip.distance(currentTip) : "interpolation overshot";
         // Translation creates inertia in world space without accumulating huge coordinates.
         m=single("g=0,s=0,a=180");sim=new PhysSimulation(definition(m));p=parameters(m);
         sim.update(p,new Matrix4f(),0,false,WORLD,10000000,0,0);

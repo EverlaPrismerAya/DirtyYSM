@@ -17,7 +17,7 @@ public final class PhysSimulation {
     private float stepDuration=STEP;
     private final PhysDefinition definition;
     private final Vector3f[] positions, velocities, targets;
-    private final Quaternionf[] rotations;
+    private final Quaternionf[] rotations, previousRotations;
     private List<PhysDefinition.Joint> activeJoints;
     private boolean[] active;
     private float[] base;
@@ -39,6 +39,8 @@ public final class PhysSimulation {
         int count=definition.bones.size();
         positions=new Vector3f[count];velocities=new Vector3f[count];targets=new Vector3f[count];rotations=new Quaternionf[count];
         for(int i=0;i<count;i++) {positions[i]=new Vector3f();velocities[i]=new Vector3f();targets[i]=new Vector3f();rotations[i]=new Quaternionf();}
+        previousRotations=new Quaternionf[count];
+        for(int i=0;i<count;i++) previousRotations[i]=new Quaternionf();
     }
 
     /** Must run before animation evaluation, including evaluation throttling and UI renders. */
@@ -96,7 +98,7 @@ public final class PhysSimulation {
         }
         originX=x;originY=y;originZ=z;world=currentWorld;
         if(reset) {
-            for(int i=0;i<positions.length;i++) {positions[i].set(targets[i]);velocities[i].zero();rotations[i].identity();}
+            for(int i=0;i<positions.length;i++) {positions[i].set(targets[i]);velocities[i].zero();rotations[i].identity();previousRotations[i].identity();}
             accumulator=0;initialized=true;
         }
         double elapsed=Double.isFinite(lastTime)?Math.max(0,time-lastTime):0;
@@ -111,6 +113,7 @@ public final class PhysSimulation {
             for(var cube:definition.cubes) if(visible[cube.bone()]) colliders.add(new PhysCollider(cube.faces(),matrices[cube.bone()]));
             accumulator=Math.min(accumulator+elapsed,stepSeconds*8.0);
             for(int step=0;step<8 && accumulator+1e-9>=stepSeconds;step++) {
+                for(var joint:activeJoints) previousRotations[joint.bone()].set(rotations[joint.bone()]);
                 integrate();
                 for(int iteration=0;iteration<8;iteration++) {
                     constrain();
@@ -196,12 +199,12 @@ public final class PhysSimulation {
     }
 
     private void reconstruct(float[] output) {
-        // Rendering consumes the last solved pose. Re-fitting and resolving here
-        // used to advance contact corrections on every draw, including repeats.
+        // Interpolate only the displayed correction; never feed it back into constraints.
+        float alpha=(float)Math.max(0,Math.min(1,accumulator/stepSeconds));
         for(var joint:activeJoints) {
             int i=joint.bone();
             Quaternionf local=new Quaternionf().rotationZYX(base[i*12+2],base[i*12+1],base[i*12]);
-            Vector3f euler=PhysMath.eulerZYX(new Quaternionf(rotations[i]).mul(local).normalize());
+            Vector3f euler=PhysMath.eulerZYX(new Quaternionf(previousRotations[i]).nlerp(rotations[i],alpha).mul(local).normalize());
             if(euler.isFinite()) {output[i*12]=euler.x;output[i*12+1]=euler.y;output[i*12+2]=euler.z;}
         }
     }

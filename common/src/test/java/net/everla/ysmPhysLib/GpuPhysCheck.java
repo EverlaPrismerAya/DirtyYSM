@@ -78,7 +78,7 @@ public final class GpuPhysCheck {
                     full.update(expectedPose,root,time,paused,WORLD,x,y,0,bounds->List.of(floor));
                     partial.update(pose,root,time,paused,WORLD,x,y,0,bounds->List.of(floor));
                     clock.advance(time,paused,WORLD,x,y,0,fps,false);
-                    kernel.solve(pose,root,root,List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,1234);
+                    kernel.solve(pose,root,root,List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,1234,clock.alpha());
                     var expected=matrices(d,expectedPose,root);
                     var data=read(kernel.output,d.bones.size()*144);
                     try {
@@ -189,7 +189,7 @@ public final class GpuPhysCheck {
                 clock.advance(time,paused,world,0,0,z,fps,false);
                 cpu.update(cpuParameters,root,time,paused,world,0,0,z);
                 if(!prototype) partial.update(gpuParameters,root,time,paused,world,0,0,z);
-                kernel.solve(gpuParameters,root,root,prototype?contacts(d,gpuParameters,root):List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,1234);
+                kernel.solve(gpuParameters,root,root,prototype?contacts(d,gpuParameters,root):List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,1234,clock.alpha());
                 var expected=matrices(d,cpuParameters,root);
                 ByteBuffer output=read(kernel.output,d.bones.size()*GpuPhysKernel.RESULT_BYTES);
                 try {

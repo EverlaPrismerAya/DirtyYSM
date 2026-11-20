@@ -22,6 +22,7 @@ final class GpuPhysKernel implements AutoCloseable {
     private final ByteBuffer inputData, contactData;
     private final float[] matrix=new float[16];
     private boolean closed;
+    private float renderAlpha=1;
 
     static String capabilityReason() {
         var c=GL.getCapabilities();
@@ -73,6 +74,11 @@ final class GpuPhysKernel implements AutoCloseable {
     /** Call with the render GL state saved; the offline harness also uses this entry point. */
     void solve(float[] parameters,Matrix4f root,Matrix4f renderRoot,java.util.List<PhysCollider> colliders,
                int steps,boolean reset,float dt,Vector3f frameVelocity,int packedLight) {
+        solve(parameters,root,renderRoot,colliders,steps,reset,dt,frameVelocity,packedLight,1);
+    }
+
+    void solve(float[] parameters,Matrix4f root,Matrix4f renderRoot,java.util.List<PhysCollider> colliders,
+               int steps,boolean reset,float dt,Vector3f frameVelocity,int packedLight,float alpha) {
         uploadAnimation(parameters);
         if(colliders.size()>model.definition.cubes.size()) throw new IllegalArgumentException("collider count exceeds topology");
         contactData.clear();
@@ -83,6 +89,8 @@ final class GpuPhysKernel implements AutoCloseable {
         integer("matrixOnly",0);integer("boneCount",model.original.length);integer("treeCount",model.trees);integer("colliderCount",colliders.size());
         integer("steps",steps);integer("resetState",reset?1:0);integer("packedLight",packedLight);
         GL20.glUniform1f(uniform("dt"),dt);GL20.glUniform3f(uniform("frameVelocity"),frameVelocity.x,frameVelocity.y,frameVelocity.z);
+        renderAlpha=alpha;
+        GL20.glUniform1f(uniform("renderAlpha"),renderAlpha);
         matrix("root",root);matrix("renderRoot",renderRoot);
         dispatch();
     }
@@ -98,6 +106,7 @@ final class GpuPhysKernel implements AutoCloseable {
     void matrices(float[] parameters,Matrix4f renderRoot,int light) {
         uploadAnimation(parameters);
         bind();integer("matrixOnly",1);integer("boneCount",model.original.length);integer("treeCount",model.trees);integer("packedLight",light);
+        GL20.glUniform1f(uniform("renderAlpha"),renderAlpha);
         matrix("renderRoot",renderRoot);dispatch();
     }
 
