@@ -16,11 +16,13 @@ Reimagined YSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语
 
 ## 与原版的区别
 
-## 官方 YSM 服务端兼容
+### 官方 YSM 服务端兼容
 
-Forge 客户端增加官方 YSM 2.6.5 的 `2.6.0` 协议适配；本模组之间保留现有协议。自动检查已通过，真实双客户端联机验收尚未完成。支持范围、限制和验证证据见[兼容说明](docs/official-ysm-compatibility.md)。
+本模组客户端兼容官方YSM2.6.x版本的传输协议。客户端在YSM2.6.x服务器时本模组的网络包行为将与官方YSM一致。
 
-## 模型按需传输
+因网络传输相关优化的实现方式限制，暂不支持官方版YSM加入安装本模组的服务器。
+
+### 模型按需传输
 
 联机时先同步模型名称、哈希、分类和搜索所需的轻量目录。只有当前页实际显示的模型卡片，以及场景中实际使用的玩家模型，才请求完整模型数据。仅新显示的卡片触发按需加载；加载完成后直接使用原生动态模型预览。
 
@@ -31,16 +33,6 @@ Forge 客户端增加官方 YSM 2.6.5 的 `2.6.0` 协议适配；本模组之间
 把模型文件夹（包含 `ysm.json`）、`.ysm` 或 `.zip` 放入 `config/yes_steve_model/client/`，例如 `client/my_model/ysm.json`。进入世界时独立扫描，在选择列表中以 `client/…` 名称显示。这些模型在多人模式下仅自己可见。
 
 可在配置启用纯客户端模式，启用后本地的一切模型均将在客户端模式下运行。
-
-## 诡厄巫法 / 诡厄巫法：启示录 饰品叠加层（仅Forge）
-
-原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。
-
-可添加特殊定位组 `HaloLocator`（不洁圣冠、破碎之环、晋升之环）和 `OdamaneHaloLocator`（终末之环）。饰品使用定位组的枢轴位置、旋转、缩放，并继承全部父级变换。缺少对应定位组时，前三者沿用头部定位，终末之环沿用身体主骨骼。
-
-模型动画、控制器或 Molang 函数中通过 `ysm.has_any_curios` 检测如上某个饰品 ID 时，该饰品将交由模型自行显示；标签查询 `has_any_curios_with_all_tags` / `has_any_curios_with_any_tag` 同样参与避让。
-
-同时安装 showmeurhalo 时关闭其反射式 YSM 头部适配，并跳过它对已由原生层接管玩家的这些饰品的重复渲染；其他功能保留。
 
 ## 物理组实现
 
@@ -86,6 +78,18 @@ Head
    └─ ysmPhys#r=2@tip
       └─ ysmPhysEnd@hair_end
 ```
+
+## 模组联动
+
+### 诡厄巫法 / 诡厄巫法：启示录 饰品叠加层（仅Forge）
+
+原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。
+
+可添加特殊定位组 `HaloLocator`（不洁圣冠、破碎之环、晋升之环）和 `OdamaneHaloLocator`（终末之环）。饰品使用定位组的枢轴位置、旋转、缩放，并继承全部父级变换。缺少对应定位组时，前三者沿用头部定位，终末之环沿用身体主骨骼。
+
+模型动画、控制器或 Molang 函数中通过 `ysm.has_any_curios` 检测如上某个饰品 ID 时，该饰品将交由模型自行显示；标签查询 `has_any_curios_with_all_tags` / `has_any_curios_with_any_tag` 同样参与避让。
+
+同时安装 showmeurhalo 时关闭其反射式 YSM 头部适配，并跳过它对已由原生层接管玩家的这些饰品的重复渲染；其他功能保留。
 
 ## 构建
 
