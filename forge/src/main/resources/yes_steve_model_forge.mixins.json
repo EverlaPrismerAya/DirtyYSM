@@ -8,6 +8,11 @@
     "defaultRequire": 0
   },
   "client": [
+    "client.goety.AccessoryLayerMixin",
+    "client.goety.WearRendererMixin",
+    "client.goety.ShowMeYourHaloMixin",
+    "client.goety.ShowMeYourRevelationHaloMixin",
+    "client.goety.ShowMeYourHaloHeadMixin",
     "client.create.PlayerSkyhookRendererAccessor",
     "client.parcool.AnimationAccessor",
     "client.parcool.DodgeAnimatorAccessor",

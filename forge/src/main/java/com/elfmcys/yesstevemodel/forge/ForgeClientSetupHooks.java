@@ -62,6 +62,12 @@ public final class ForgeClientSetupHooks {
         }
         event.enqueueWork(() -> {
             CuriosCompat.init();
+            if (net.minecraftforge.fml.ModList.get().isLoaded("curios")
+                    && (net.minecraftforge.fml.ModList.get().isLoaded("goety")
+                    || net.minecraftforge.fml.ModList.get().isLoaded("goety_revelation"))) {
+                net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
+                        net.everla.reimaginedysm.compat.goety.GoetyAccessoryLayer.class);
+            }
             FirstPersonCompat.init();
             RealCameraCompat.init();
             PlayerAnimatorCompat.init();

@@ -27,6 +27,9 @@ public class HasAnyCuriosWithAnyTag extends LivingEntityFunction {
             if (tag == null) {
                 return null;
             }
+            if (context.entity().geoInstance() instanceof com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity model) {
+                model.recordCurioRenderQuery("#" + tag);
+            }
             referenceArrayList.set(i - 1, TagKey.create(Registries.ITEM, tag));
         }
         return CuriosCompat.hasTaggedItemInSlot(context.entity().entity(), type, referenceArrayList);

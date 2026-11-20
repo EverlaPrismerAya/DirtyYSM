@@ -29,6 +29,17 @@ public abstract class CustomPlayerEntity extends LivingAnimatable<Player> implem
 
     private List<IValue> syncIValues;
 
+    private java.util.Set<String> curioRenderQueries;
+
+    public void recordCurioRenderQuery(String reference) {
+        if (this.curioRenderQueries == null) this.curioRenderQueries = new java.util.HashSet<>();
+        this.curioRenderQueries.add(reference);
+    }
+
+    public java.util.Set<String> getCurioRenderQueries() {
+        return this.curioRenderQueries == null ? java.util.Set.of() : this.curioRenderQueries;
+    }
+
     public CustomPlayerEntity(Player player, boolean isLocalPlayer, boolean isActive) {
         super(player, isActive);
         this.isModelSwitching = false;
@@ -50,11 +61,13 @@ public abstract class CustomPlayerEntity extends LivingAnimatable<Player> implem
     public void resetModel() {
         super.resetModel();
         this.syncIValues = null;
+        this.curioRenderQueries = null;
     }
 
     @Override
     public void reset() {
         super.reset();
+        this.curioRenderQueries = null;
         this.isModelSwitching = false;
         this.selectedModelId = "idle";
         this.isDisabled = false;
@@ -77,6 +90,7 @@ public abstract class CustomPlayerEntity extends LivingAnimatable<Player> implem
 
     @Override
     public void onModelLoaded(ModelAssembly context) {
+        this.curioRenderQueries = null;
         super.onModelLoaded(context);
         this.syncIValues = context.getExpressionCache().getEvents().get(MolangEventDispatcher.SYNC);
     }

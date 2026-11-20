@@ -13,6 +13,8 @@ public class Animation {
 
     public final String animationName;
 
+    public java.util.Set<String> curioRenderReferences = java.util.Set.of();
+
     public final float animationLength;
 
     public final ILoopType loop;

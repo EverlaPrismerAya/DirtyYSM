@@ -130,7 +130,9 @@ public class JsonAnimationUtils {
         if (animationLengthTicks == -1) {
             animationLengthTicks = calculateLength(boneAnimations);
         }
-        return new Animation(animationName, animationLengthTicks, loop, null, null, blendWeight, overridePrevAnim, boneAnimations.toArray(new BoneAnimation[0]), soundKeyFrames.toArray(new EventKeyFrame[0]), new ParticleEventKeyFrame[0], customInstructionKeyframes.toArray(new EventKeyFrame[0]));
+        Animation animation = new Animation(animationName, animationLengthTicks, loop, null, null, blendWeight, overridePrevAnim, boneAnimations.toArray(new BoneAnimation[0]), soundKeyFrames.toArray(new EventKeyFrame[0]), new ParticleEventKeyFrame[0], customInstructionKeyframes.toArray(new EventKeyFrame[0]));
+        animation.curioRenderReferences = net.everla.reimaginedysm.compat.curios.CurioRenderQueries.find(animationJsonObject.toString());
+        return animation;
     }
 
     private static float calculateLength(List<BoneAnimation> boneAnimations) {

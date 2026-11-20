@@ -26,6 +26,9 @@ public class HasAnyCurios extends LivingEntityFunction {
             if (name == null) {
                 return null;
             }
+            if (context.entity().geoInstance() instanceof com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity model) {
+                model.recordCurioRenderQuery(name.toString());
+            }
             Item item = BuiltInRegistries.ITEM.get(name);
             if (item != null) {
                 referenceOpenHashSet.add(item);

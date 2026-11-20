@@ -40,7 +40,9 @@ public class MolangParser {
     }
 
     public IValue parseExpressionUnsafe(String molangExpression, boolean isScript) throws ParseException {
-        MolangValue value = new MolangValue(this.engine.parse(isScript ? stripComments(molangExpression) : molangExpression), isScript);
+        String source = isScript ? stripComments(molangExpression) : molangExpression;
+        MolangValue value = new MolangValue(this.engine.parse(source), isScript);
+        value.setCurioRenderReferences(source);
         this.primaryBinding.dispose();
         return value;
     }

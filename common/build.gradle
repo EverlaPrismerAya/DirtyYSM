@@ -96,6 +96,15 @@ tasks.register('checkModelIcons', JavaExec) {
 
 tasks.named('check') { dependsOn 'checkModelIcons' }
 
+tasks.register('checkCurioRenderQueries', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'net.everla.reimaginedysm.compat.curios.CurioRenderQueriesCheck'
+    enableAssertions = true
+}
+
+tasks.named('check') { dependsOn 'checkCurioRenderQueries' }
+
 tasks.register('checkModelTransfer', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath + sourceSets.main.compileClasspath

@@ -12,6 +12,16 @@ public class MolangValue implements IValue {
 
     private final List<Expression> expressions;
 
+    private java.util.Set<String> curioRenderReferences = java.util.Set.of();
+
+    public void setCurioRenderReferences(String source) {
+        this.curioRenderReferences = net.everla.reimaginedysm.compat.curios.CurioRenderQueries.find(source);
+    }
+
+    public java.util.Set<String> getCurioRenderReferences() {
+        return this.curioRenderReferences;
+    }
+
     private final boolean isScript;
 
     private final boolean constant;
