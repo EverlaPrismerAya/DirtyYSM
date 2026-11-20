@@ -102,6 +102,9 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
                 try {
                     if (bodyHalo) {
                         if (prepareBody(poses, model)) continue;
+                        // GR renders relative to vanilla's head origin, 24 model pixels above the feet.
+                        // Apply this in body space, before converting YSM's axes to vanilla model axes.
+                        poses.translate(0, 24.0 / 16.0, 0);
                     } else if (RenderUtils.prepMatrixForLocator(poses, model.headBones())) continue;
                     poses.scale(-1, -1, 1);
                     rendering = id.getPath().equals("halo_of_the_end");
