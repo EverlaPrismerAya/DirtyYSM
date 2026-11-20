@@ -47,8 +47,8 @@ public class CommonConfig {
         builder.push("server_scheduler");
         builder.comment("Concurrent level for processing models. Value 0 means AUTO.");
         THREAD_COUNT = builder.defineInRange("ThreadCount", 0, 0, Math.max(2, Runtime.getRuntime().availableProcessors() - 1));
-        builder.comment("Bandwidth limitation during distributing models to players.(In Mbps)");
-        BANDWIDTH_LIMIT = builder.defineInRange("BandwidthLimit", 5, 1, 999);
+        builder.comment("Per-player model download bandwidth limit in Mbps (1 Mbps = 125000 bytes/s). Changes apply to subsequent chunks.");
+        BANDWIDTH_LIMIT = builder.defineInRange("BandwidthLimit", 36, 1, 999);
         builder.comment("Timeout for players to respond to synchronization. Value not greater than 10 means AUTO.(In seconds)");
         PLAYER_SYNC_TIMEOUT = builder.defineInRange("PlayerSyncTimeout", 0, 0, 120);
         builder.comment("Suppress network synchronization of partial features to reduce bandwidth usage");

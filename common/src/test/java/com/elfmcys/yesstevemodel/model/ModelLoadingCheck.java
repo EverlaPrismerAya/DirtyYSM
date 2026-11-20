@@ -35,6 +35,13 @@ public final class ModelLoadingCheck {
 
     public static final class Headless {
         public static void run() throws Exception {
+            var limitedPlayer = new ServerModelManager.PlayerSyncState();
+            var otherPlayer = new ServerModelManager.PlayerSyncState();
+            limitedPlayer.limitBandwidth(450000, 36);
+            assert otherPlayer.limitBandwidth(1, 36) == 0 : "Players share bandwidth debt";
+            assert limitedPlayer.limitBandwidth(1, 36) > 0.05 : "36 Mbps did not throttle model chunks";
+            limitedPlayer.limitBandwidth(125000, 1);
+            assert limitedPlayer.limitBandwidth(1, 1) > 0.5 : "Live bandwidth change did not apply";
             Path roamingRoot=Files.createTempDirectory("ysm-local-roaming-check");
             UUID roamingPlayer=UUID.randomUUID();String roamingHash="a".repeat(64);
             int roamingName=com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool.computeIfAbsent("outfit");

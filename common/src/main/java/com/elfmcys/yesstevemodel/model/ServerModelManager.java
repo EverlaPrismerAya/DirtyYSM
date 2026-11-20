@@ -119,17 +119,12 @@ public final class ServerModelManager {
     private static final Gson GSON = new Gson();
     private static final int CATALOG_VERSION = 2;
 
-    private static RateLimiter bandwidthLimiter = null;
     private static Semaphore threadLimiter = null;
     private static boolean limitsInitialized = false;
 
-    private static void initRateLimit() {
+    private static synchronized void initRateLimit() {
         if (!limitsInitialized) {
             try {
-                int mbps = CommonConfig.BANDWIDTH_LIMIT.get();
-                double bytesPerSec = Math.max(1.0, mbps * 131072.0);
-                bandwidthLimiter = RateLimiter.create(bytesPerSec);
-
                 int threads = CommonConfig.THREAD_COUNT.get();
                 if (threads <= 0) {
                     threads = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
@@ -139,7 +134,6 @@ public final class ServerModelManager {
                 limitsInitialized = true;
             } catch (Exception e) {
                 YesSteveModel.LOGGER.error("[YSM] Failed to initialize limits from config", e);
-                bandwidthLimiter = RateLimiter.create(5 * 131072.0);
                 threadLimiter = new Semaphore(Math.max(2, Runtime.getRuntime().availableProcessors() - 1));
                 limitsInitialized = true;
             }
@@ -439,6 +433,18 @@ public final class ServerModelManager {
     }
 
     static class PlayerSyncState {
+        private RateLimiter bandwidthLimiter;
+
+        synchronized double limitBandwidth(int bytes, int mbps) {
+            double bytesPerSecond = mbps * 125000.0;
+            if (bandwidthLimiter == null) {
+                bandwidthLimiter = RateLimiter.create(bytesPerSecond);
+            } else if (bandwidthLimiter.getRate() != bytesPerSecond) {
+                bandwidthLimiter.setRate(bytesPerSecond);
+            }
+            return bandwidthLimiter.acquire(bytes);
+        }
+
         byte[] clientKey = new byte[56];
         byte[] key1;
         byte[] clientNextKey;
@@ -1422,9 +1428,8 @@ public final class ServerModelManager {
                             outBuf.getRawBuf().writeBytes(fileData, offset, length);
                             YsmCrypt.EncryptedPacket result = YsmCrypt.encrypt(outBuf.toArray(), state.key1, false);
 
-//                            bandwidthLimiter.acquire(result.data().length); //TODO
-
-
+                            state.limitBandwidth(result.data().length, CommonConfig.BANDWIDTH_LIMIT.get());
+                            if (syncStates.get(uuid) != state) return;
                             // Stream chunks
                             boolean success = sendModelData(uuid, ByteBuffer.wrap(result.data()), transfer);
                             if (success) {

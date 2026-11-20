@@ -20,6 +20,8 @@ Reimagined YSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语
 
 联机时先同步模型名称、哈希、分类和搜索所需的轻量目录。只有当前页实际显示的模型卡片，以及场景中实际使用的玩家模型，才请求完整模型数据。仅新显示的卡片触发按需加载；加载完成后直接使用原生动态模型预览。
 
+服务端 `config/yes_steve_model-common.toml` 的 `[server_scheduler] BandwidthLimit` 控制每位玩家的模型下载速率，默认 `36` Mbps（4.5 MB/s，相当于基本上没有限速），范围 `1–999`。可通过管理员服务端配置面板调整，即时生效。每位玩家独立计速，同一玩家的并发模型请求共享额度。
+
 ### 纯客户端模型
 
 把模型文件夹（包含 `ysm.json`）、`.ysm` 或 `.zip` 放入 `config/yes_steve_model/client/`，例如 `client/my_model/ysm.json`。进入世界时独立扫描，在选择列表中以 `client/…` 名称显示。这些模型在多人模式下仅自己可见。
