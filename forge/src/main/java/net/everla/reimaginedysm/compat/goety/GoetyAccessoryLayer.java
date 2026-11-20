@@ -73,9 +73,18 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
         var model = entity.getCurrentModel();
         if (model == null) return;
         RENDERED.add(player.getUUID());
-        if (model.headBones().isEmpty()) return;
         var references = overrides.computeIfAbsent(entity.getModelAssembly(), GoetyAccessoryLayer::findOverrides);
-        CuriosApi.getCuriosInventory(player).ifPresent(inventory -> inventory.getCurios().forEach((slot, handler) -> {
+        CuriosApi.getCuriosInventory(player).ifPresent(inventory -> {
+            // Equipment owns priority even when hidden or rendered by the model itself.
+            int highestHalo = 0;
+            for (var handler : inventory.getCurios().values()) {
+                for (int i = 0; i < handler.getStacks().getSlots(); i++) {
+                    highestHalo = Math.max(highestHalo, haloPriority(BuiltInRegistries.ITEM.getKey(
+                            handler.getStacks().getStackInSlot(i).getItem())));
+                }
+            }
+            final int equippedHalo = highestHalo;
+            inventory.getCurios().forEach((slot, handler) -> {
             for (int i = 0; i < handler.getStacks().getSlots(); i++) {
                 ItemStack stack = handler.getCosmeticStacks().getStackInSlot(i);
                 boolean cosmetic = !stack.isEmpty();
@@ -85,9 +94,15 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
                         || handledByModel(entity.getCurioRenderQueries(), stack)) continue;
                 var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
                 if (!isSupported(id)) continue;
+                int priority = haloPriority(id);
+                if (priority > 0 && priority < equippedHalo) continue;
+                boolean bodyHalo = id.getPath().equals("halo_of_the_end");
+                if (!bodyHalo && model.headBones().isEmpty()) continue;
                 poses.pushPose();
                 try {
-                    if (RenderUtils.prepMatrixForLocator(poses, model.headBones())) continue;
+                    if (bodyHalo) {
+                        if (prepareBody(poses, model)) continue;
+                    } else if (RenderUtils.prepMatrixForLocator(poses, model.headBones())) continue;
                     poses.scale(-1, -1, 1);
                     rendering = id.getPath().equals("halo_of_the_end");
                     renderAccessory(stack, id, new SlotContext(slot, player, i, cosmetic, visible), poses,
@@ -97,7 +112,41 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
                     poses.popPose();
                 }
             }
-        }));
+            });
+        });
+    }
+
+    private static boolean prepareBody(PoseStack poses,
+            com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel model) {
+        var bones = model.getGeoModel().topLevelBones();
+        int body = -1;
+        for (String name : List.of("AllBody", "Body", "body")) {
+            for (int i = 0; i < bones.size(); i++) {
+                if (bones.get(i).getName().equals(name)) {
+                    body = i;
+                    break;
+                }
+            }
+            if (body >= 0) break;
+        }
+        // Keep the renderer's feet-origin coordinates; a locator would move it to a pivot.
+        var chain = new ArrayList<Integer>();
+        for (int i = body; i >= 0; i = bones.get(i).parentIdx) chain.add(i);
+        for (int i = chain.size() - 1; i >= 0; i--) {
+            var bone = model.bones().get(bones.get(chain.get(i)).getBoneId());
+            if (RenderUtils.prepMatrixForBone(poses, bone)) return true;
+        }
+        return false;
+    }
+
+    private static int haloPriority(ResourceLocation id) {
+        if (!id.getNamespace().equals("goety_revelation")) return 0;
+        return switch (id.getPath()) {
+            case "halo_of_the_end" -> 3;
+            case "ascension_halo" -> 2;
+            case "broken_halo" -> 1;
+            default -> 0;
+        };
     }
 
     public static boolean isSupported(ResourceLocation id) {
