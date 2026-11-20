@@ -113,6 +113,13 @@ public final class PhysDefinition {
         return result;
     }
 
+    /** Body contacts can affect every physical island. Keep their unvalidated GPU
+     * solver off, but still generate the final matrices on GPU for both draw paths. */
+    boolean[] cpuCollisionIslands() {
+        if(cubes.isEmpty()) return blockCollisionIslands();
+        return affected.clone();
+    }
+
     private int depth(int i) {
         int d=0; while((i=bones.get(i).parentIdx)>=0) d++; return d;
     }

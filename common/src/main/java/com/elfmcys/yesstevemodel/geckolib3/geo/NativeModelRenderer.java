@@ -50,8 +50,7 @@ public class NativeModelRenderer {
             }
 
             if (OculusCompat.isShaderPackInUse() && !isPreview) {
-                net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
-                if (IrisRenderPath.tryRender(model, pose, net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model,boneParams), renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
+                if (IrisRenderPath.tryRender(model, pose, boneParams, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
                     return;
                 }
             } else {

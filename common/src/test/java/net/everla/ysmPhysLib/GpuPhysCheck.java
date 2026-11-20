@@ -39,16 +39,18 @@ public final class GpuPhysCheck {
                 else assert !fixture.ysmPhysics.cubes.isEmpty() : "unexpected CPU fallback";
             }
             GeoModel demo=loadModel(System.getProperty("ysm.physicsExample"));
+            for(int fps:new int[]{1,15,30,60,120}) for(int scenario=2;scenario<=4;scenario++) parity(demo,fps,scenario);
+            irisMatrices();
             if(Boolean.getBoolean("ysm.gpuContactPrototype")) {
-                for(int scenario=2;scenario<5;scenario++) parity(fixture(scenario),120,scenario);
-                parity(demo,120,4);parity(demo,120,2);
-                if(System.getProperty("ysm.physicsModel")!=null) parity(loadModel(System.getProperty("ysm.physicsModel")),120,4);
+                for(int scenario=2;scenario<5;scenario++) parity(fixture(scenario),120,scenario,true);
+                parity(demo,120,4,true);parity(demo,120,2,true);
+                if(System.getProperty("ysm.physicsModel")!=null) parity(loadModel(System.getProperty("ysm.physicsModel")),120,4,true);
             }
             hybrid();
             visibilityAndState();
             for(int count:new int[]{1,16,64}) benchmark(fixture(0),count);
-            for(int count:new int[]{1,16,64}) benchmark(demo,count);
-            System.out.println("PASS: enabled GPU paths: parity, branches, cadence, resets, visibility, repeated draws, CPU contact gate and GL state restoration");
+            if(Boolean.getBoolean("ysm.gpuContactPrototype")) for(int count:new int[]{1,16,64}) benchmark(demo,count);
+            System.out.println("PASS: enabled GPU paths: parity, branches, cadence, resets, visibility, repeated draws, CPU collision islands and GL state restoration");
         } finally {
             if(window!=0) {GpuPhysKernel.shutdown();GLFW.glfwDestroyWindow(window);}
             GLFW.glfwTerminate();GLFW.glfwSetErrorCallback(null);callback.free();
@@ -158,24 +160,36 @@ public final class GpuPhysCheck {
         ByteBuffer out=MemoryUtil.memAlloc(bytes);GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER,buffer);
         GL42.glMemoryBarrier(GL43.GL_BUFFER_UPDATE_BARRIER_BIT);GL15.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER,0,out);return out;
     }
-    private static void parity(GeoModel geometry,int fps,int scenario) {
+    private static void parity(GeoModel geometry,int fps,int scenario) {parity(geometry,fps,scenario,false);}
+    private static void parity(GeoModel geometry,int fps,int scenario,boolean prototype) {
         var d=geometry.ysmPhysics;
         var cpu=new PhysSimulation(d);cpu.setFrameRate(fps);
         var gpuParameters=parameters(geometry);var cpuParameters=gpuParameters.clone();
+        var partial=new PhysSimulation(d);partial.setFrameRate(fps);
+        if(!prototype) partial.partition(gpuParameters,true);
         var clock=new GpuPhysics.Clock();
         float worst=0;
-        try(var topology=new GpuPhysModel(d,new boolean[d.bones.size()]);var kernel=new GpuPhysKernel(topology,1)) {
+        try(var topology=new GpuPhysModel(d,new boolean[d.bones.size()],prototype?d.blockCollisionIslands():d.cpuCollisionIslands());var kernel=new GpuPhysKernel(topology,1)) {
             for(int frame=0;frame<100;frame++) {
                 Matrix4f root=new Matrix4f();
                 if(scenario>=3) root.rotateX(.4f).scale(.7f);
                 if(scenario==6) root.scale(1,1.2f,.9f);
+                cpu.restore(cpuParameters);
+                if(!prototype) partial.restore(gpuParameters);
+                if(!prototype) for(var cube:d.cubes) {
+                    int at=cube.bone()*12;
+                    cpuParameters[at+2]=gpuParameters[at+2]=.15f*(float)Math.sin(frame*.1);
+                    cpuParameters[at+9]=gpuParameters[at+9]=frame>=20 && frame<27?1:0;
+                }
                 // Pausing, repeated drawing, teleports, and backwards movement.
                 boolean paused=frame>=30 && frame<35;double time=frame/60.0,z=scenario>=4?-4*time:0;
+                if(!prototype && scenario>=4 && frame>50) z=-4*(100-frame)/60.0;
                 if(frame>=70) z+=100;
                 Object world=frame<80?WORLD:geometry;
                 clock.advance(time,paused,world,0,0,z,fps,false);
                 cpu.update(cpuParameters,root,time,paused,world,0,0,z);
-                kernel.solve(gpuParameters,root,root,contacts(d,gpuParameters,root),clock.steps,clock.reset,1f/fps,clock.velocity,1234);
+                if(!prototype) partial.update(gpuParameters,root,time,paused,world,0,0,z);
+                kernel.solve(gpuParameters,root,root,prototype?contacts(d,gpuParameters,root):List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,1234);
                 var expected=matrices(d,cpuParameters,root);
                 ByteBuffer output=read(kernel.output,d.bones.size()*GpuPhysKernel.RESULT_BYTES);
                 try {
@@ -210,9 +224,14 @@ public final class GpuPhysCheck {
     }
     private static void visibilityAndState() throws Exception {
         var contactModel=fixture(3);
-        assert !GpuPhysics.supportsDefinition(contactModel.ysmPhysics) : "unvalidated contact path enabled";
+        assert GpuPhysics.supportsDefinition(contactModel.ysmPhysics) : "body contacts disabled";
         assert !GpuPhysics.supportedScale(contactModel.ysmPhysics,parameters(contactModel),new Matrix4f().scale(.7f,1.2f,.9f));
         assert GpuPhysics.supportedScale(contactModel.ysmPhysics,parameters(contactModel),new Matrix4f().scale(.7f));
+        assert !GpuPhysics.supportedScale(contactModel.ysmPhysics,parameters(contactModel),new Matrix4f().scale(-1,1,1));
+        boolean[] contacts=contactModel.ysmPhysics.cpuCollisionIslands();
+        for(var joint:contactModel.ysmPhysics.joints) assert contacts[joint.bone()] : "unvalidated GPU body solver enabled";
+        var terrainOnly=model(bone("ysmPhys#bc=true@root",-1,0,0,0),bone("ysmPhysEnd@end",0,16,0,0));
+        assert !GpuPhysics.supportsDefinition(definition(terrainOnly)) : "all-terrain model must report CPU physics";
         var geometry=fixture(0);var d=geometry.ysmPhysics;float[] p=parameters(geometry);
         p[2*12+9]=1; // hide self, keep ordinary child visible
         try(var topology=new GpuPhysModel(d,new boolean[d.bones.size()]);var kernel=new GpuPhysKernel(topology,1)) {
@@ -231,6 +250,50 @@ public final class GpuPhysCheck {
             p[2*12+11]=1;assert GpuPhysics.requiresCpuPose(geometry,topology.affected,p);
         }
     }
+    /** Exercise the real Iris vertex-transform shader with GPU-local physics matrices. */
+    private static void irisMatrices() throws Exception {
+        var geometry=fixture(1);var d=geometry.ysmPhysics;var p=parameters(geometry);
+        var root=new Matrix4f().translate(2,3,-4).rotateXYZ(.3f,-.5f,.2f).scale(.7f);
+        int shader=ShaderUtil.linkProgram(ShaderUtil.compileShaderFromResource(GL43.GL_COMPUTE_SHADER,"/bone_xform.csh"));
+        int input=GL15.glGenBuffers(),output=GL15.glGenBuffers();
+        ByteBuffer vertices=MemoryUtil.memCalloc(32),local=null,world=null,result=null;
+        try(var saved=new GpuPhysKernel.SavedState();var model=new GpuPhysModel(d,new boolean[d.bones.size()]);var kernel=new GpuPhysKernel(model,1)) {
+            vertices.putFloat(.2f).putFloat(.3f).putFloat(.1f).putFloat(0).putFloat(0)
+                    .putInt(511<<10).putInt(0).putInt(0).flip();
+            GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER,input);GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,vertices,GL15.GL_STATIC_DRAW);
+            GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER,output);GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,36,GL15.GL_DYNAMIC_COPY);
+            kernel.solve(p,root,root,List.of(),0,true,1f/60,ZERO,1234);
+            for(int frame=0;frame<10;frame++) kernel.solve(p,root,root,List.of(),1,false,1f/60,ZERO,1234);
+            world=read(kernel.output,d.bones.size()*144);
+            kernel.matrices(p,new Matrix4f(),1234);
+            local=read(kernel.output,d.bones.size()*144);
+            for(int i=0;i<d.bones.size();i++) {
+                var actual=new Matrix4f(local.asFloatBuffer().position(i*36));
+                var expected=new Matrix4f(world.asFloatBuffer().position(i*36));
+                var point=new Vector3f(.2f,.3f,.1f);
+                assert root.transformPosition(actual.transformPosition(new Vector3f(point)))
+                        .distance(expected.transformPosition(new Vector3f(point)))<.001f : "Iris applies root twice";
+            }
+            GL20.glUseProgram(shader);
+            GL20.glUniform4f(GL20.glGetUniformLocation(shader,"u_color"),1,1,1,1);
+            GL20.glUniform1i(GL20.glGetUniformLocation(shader,"u_packedOverlay"),0);
+            GL20.glUniformMatrix4fv(GL20.glGetUniformLocation(shader,"u_modelView"),false,root.get(new float[16]));
+            GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,0,input);
+            GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,1,output);
+            GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,2,kernel.output);
+            GL43.glDispatchCompute(1,1,1);GL42.glMemoryBarrier(GL43.GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+            result=read(output,36);
+            var actual=new Vector3f(result.getFloat(0),result.getFloat(4),result.getFloat(8));
+            var expected=new Matrix4f(local.asFloatBuffer()).transformPosition(new Vector3f(.2f,.3f,.1f));
+            assert actual.distance(expected)<.001f : "Iris vertex transform differs from local physical pose";
+            assert GL11.glGetError()==GL11.GL_NO_ERROR : "Iris compute GL error";
+        } finally {
+            MemoryUtil.memFree(vertices);if(local!=null) MemoryUtil.memFree(local);if(world!=null) MemoryUtil.memFree(world);if(result!=null) MemoryUtil.memFree(result);
+            GL15.glDeleteBuffers(input);GL15.glDeleteBuffers(output);GL20.glDeleteProgram(shader);
+        }
+        System.out.println("PASS: Iris local physics SSBO, actual vertex-transform shader and root applied once");
+    }
+
     private static void benchmark(GeoModel geometry,int count) throws Exception {
         var d=geometry.ysmPhysics;float[] p=parameters(geometry);var root=new Matrix4f();var contacts=contacts(d,p,root);
         int drawProgram=ShaderUtil.linkProgram(ShaderUtil.compileShader(GL20.GL_VERTEX_SHADER,"""
@@ -245,7 +308,7 @@ public final class GpuPhysCheck {
         int vao=GL30.glGenVertexArrays();GL30.glBindVertexArray(vao);
         var bean=(com.sun.management.ThreadMXBean)java.lang.management.ManagementFactory.getThreadMXBean();
         bean.setThreadAllocatedMemoryEnabled(true);
-        try(var topology=new GpuPhysModel(d,new boolean[d.bones.size()]);var kernel=new GpuPhysKernel(topology,count)) {
+        try(var topology=new GpuPhysModel(d,new boolean[d.bones.size()],d.blockCollisionIslands());var kernel=new GpuPhysKernel(topology,count)) {
             PhysSimulation[] cpu=new PhysSimulation[count];float[][] poses=new float[count][];
             for(int i=0;i<count;i++) {cpu[i]=new PhysSimulation(d);cpu[i].setFrameRate(60);poses[i]=p.clone();}
             for(int frame=0;frame<30;frame++) for(int i=0;i<count;i++) cpu[i].update(poses[i],root,frame/60.0,false,WORLD,0,0,0);

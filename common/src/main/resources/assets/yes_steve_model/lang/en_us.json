@@ -530,7 +530,7 @@
   "gui.yes_steve_model.config.physics_enabled": "Enable physics groups",
   "gui.yes_steve_model.config.physics_enabled.desc": "Simulate world players, including other players. Inventory and model selection previews are excluded.",
   "gui.yes_steve_model.config.physics_experimental_gpu": "Experimental GPU acceleration",
-  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "An early experimental feature; functionality is not guaranteed.",
+  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "Experimental GPU physics with Oculus/Iris support. Collision groups solve on CPU with GPU matrices; no guaranteed speedup.",
   "gui.yes_steve_model.config.physics_fps": "Physics simulation frame rate",
   "gui.yes_steve_model.config.physics_fps.desc": "Physics steps per second, integer 0–120; default 60. 0 disables simulation and restores animation. Lower rates reduce accuracy and can cause visible stepping."
 }

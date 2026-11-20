@@ -15,6 +15,10 @@ final class GpuPhysModel implements AutoCloseable {
     int users;
 
     GpuPhysModel(PhysDefinition definition, boolean[] glowing) {
+        this(definition,glowing,definition.cpuCollisionIslands());
+    }
+
+    GpuPhysModel(PhysDefinition definition,boolean[] glowing,boolean[] cpu) {
         this.definition=definition;
         original=definition.order.clone();sorted=new int[original.length];affected=definition.affected;
         for(int i=0;i<original.length;i++) sorted[original[i]]=i;
@@ -29,7 +33,6 @@ final class GpuPhysModel implements AutoCloseable {
         }
         boolean[] ends=new boolean[original.length];for(int end:definition.ends) ends[end]=true;
         int[] island=definition.islands();
-        boolean[] cpu=definition.blockCollisionIslands();
         int treeCount=0;
         int[] remap=new int[original.length];java.util.Arrays.fill(remap,-1);
         for(int i:original) {

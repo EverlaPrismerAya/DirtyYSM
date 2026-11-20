@@ -69,9 +69,9 @@ public final class GpuMesh {
         if (xformVao != 0) return;
         xformVbo = GlStateManager._glGenBuffers();
         GlStateManager._glBindBuffer(GL15.GL_ARRAY_BUFFER, xformVbo);
-        GL45.glBufferData(GL15.GL_ARRAY_BUFFER, (long) vertexCount * 36, GL15.GL_DYNAMIC_DRAW);
-        xformVao = GL45.glGenVertexArrays();
-        GL45.glBindVertexArray(xformVao);
+        GL15.glBufferData(GL15.GL_ARRAY_BUFFER, (long) vertexCount * 36, GL15.GL_DYNAMIC_DRAW);
+        xformVao = GL30.glGenVertexArrays();
+        GlStateManager._glBindVertexArray(xformVao);
         GlStateManager._glBindBuffer(GL15.GL_ARRAY_BUFFER, xformVbo);
         GlStateManager._glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, ibo);
         GL20.glEnableVertexAttribArray(0);
@@ -86,7 +86,7 @@ public final class GpuMesh {
         GL30.glVertexAttribIPointer(4, 2, GL11.GL_SHORT, 36, 28L);
         GL20.glEnableVertexAttribArray(5);
         GL20.glVertexAttribPointer(5, 3, GL11.GL_BYTE, true, 36, 32L);
-        GL45.glBindVertexArray(0);
+        GlStateManager._glBindVertexArray(0);
         GlStateManager._glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GlStateManager._glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
@@ -97,9 +97,9 @@ public final class GpuMesh {
         GlStateManager._glDeleteBuffers(vbo);
         GlStateManager._glDeleteBuffers(ibo);
         GlStateManager._glDeleteBuffers(boneSsbo);
-        GL45.glDeleteVertexArrays(vao);
+        GL30.glDeleteVertexArrays(vao);
         if (xformVbo != 0) GlStateManager._glDeleteBuffers(xformVbo);
-        if (xformVao != 0) GL45.glDeleteVertexArrays(xformVao);
+        if (xformVao != 0) GL30.glDeleteVertexArrays(xformVao);
         if (pointer != 0) {
             GeoModel.nFreeGpuMesh(pointer);
         }

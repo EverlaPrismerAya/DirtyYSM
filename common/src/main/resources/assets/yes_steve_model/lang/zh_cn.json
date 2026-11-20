@@ -530,7 +530,7 @@
   "gui.yes_steve_model.config.physics_enabled": "启用物理组",
   "gui.yes_steve_model.config.physics_enabled.desc": "仅对世界内玩家的物理组生效，包括其他玩家；不影响物品栏和模型选择界面。",
   "gui.yes_steve_model.config.physics_experimental_gpu": "实验性GPU加速",
-  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "早期实验性产物，不保证可用。",
+  "gui.yes_steve_model.config.physics_experimental_gpu.desc": "实验性 GPU 物理，支持 Oculus/Iris 光影。碰撞相关组由 CPU 求解，GPU 生成矩阵；不保证提速。",
   "gui.yes_steve_model.config.physics_fps": "物理模拟帧率",
   "gui.yes_steve_model.config.physics_fps.desc": "每秒物理解算次数，整数 0–120，默认 60。0 表示禁用模拟并使用原动画。较低帧率会降低精度，可能出现明显跳动。"
 }

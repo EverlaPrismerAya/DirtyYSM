@@ -20,7 +20,7 @@ public final class PhysConfig {
         var enabled=builder.comment("Enable ysmPhys simulation for world players only.").define("Enabled",true);
         var fps=builder.comment("Physics updates per second (0 disables simulation). Lower rates use larger fixed steps.")
                 .defineInRange("SimulationFPS",60,0,120);
-        var gpu=builder.comment("Experimental OpenGL compute physics. Body colliders, unsupported hardware, shader packs and CPU pose consumers fall back to CPU. No guaranteed speedup.")
+        var gpu=builder.comment("Experimental OpenGL compute physics. Supports Oculus/Iris. Collision dependency groups use CPU physics with GPU matrices; unsupported hardware and CPU pose consumers use CPU. No guaranteed speedup.")
                 .define("ExperimentalGPUAcceleration",false);
         if(local) {Local.ENABLED=enabled;Local.FPS=fps;Local.EXPERIMENTAL_GPU=gpu;}
         else {ENABLED=enabled;FPS=fps;EXPERIMENTAL_GPU=gpu;}

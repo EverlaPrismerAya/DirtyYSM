@@ -51,7 +51,7 @@ public final class PhysSimulation {
     void partition(float[] parameters, boolean hybrid) {
         if((active!=null)==hybrid) return;
         restore(parameters);
-        active=hybrid?definition.blockCollisionIslands():null;
+        active=hybrid?definition.cpuCollisionIslands():null;
         activeJoints=hybrid?definition.joints.stream().filter(j->active[j.bone()]).toList():definition.joints;
         invalidate();
     }

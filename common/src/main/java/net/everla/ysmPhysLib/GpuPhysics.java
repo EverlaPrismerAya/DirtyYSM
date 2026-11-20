@@ -7,7 +7,6 @@ import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
 import com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel;
 import com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.everla.reimaginedysm.compat.oculus.OculusCompat;
 import net.everla.reimaginedysm.compat.optifine.OptiFineDetector;
 import net.everla.reimaginedysm.gpu.BoneSkinShader;
 import net.everla.reimaginedysm.gpu.GpuCapability;
@@ -37,13 +36,13 @@ public final class GpuPhysics {
         if(!PhysConfig.gpuEnabled()) {lastReason="experimental GPU physics disabled";deactivate(parameters);return false;}
         String reason=null;
         if(!textured || ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()
-                || !ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) reason="ordinary GPU renderer required";
-        else if(OculusCompat.isShaderPackInUse() || OptiFineDetector.isOptifinePresent()) reason="shader-pack/OptiFine path uses CPU physics";
+                || !ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) reason="GPU renderer required";
+        else if(OptiFineDetector.isOptifinePresent()) reason="OptiFine is unsupported";
         else if(shaderFailure!=null) reason=shaderFailure;
         else if(!GpuCapability.isAvailable()) reason=GpuCapability.getReason();
         else if(!GL.getCapabilities().OpenGL43) reason="OpenGL 4.3 required";
         else if(!root.isFinite() || Math.abs(root.determinant())<1e-12f) reason="singular/non-finite model transform";
-        else if(!supportsDefinition(owner.getGeoModel().ysmPhysics)) reason="body/world collisions require CPU physics";
+        else if(!supportsDefinition(owner.getGeoModel().ysmPhysics)) reason="CPU physics active; all dependency groups require world collisions";
         else if(!supportedScale(owner.getGeoModel().ysmPhysics,parameters,root)) reason="nonuniform/singular collision transforms require CPU physics";
         else if(requiresCpuPose(owner.getGeoModel(),gpuAffected(owner.getGeoModel().ysmPhysics),parameters)) reason="physical subtree has a CPU attachment, locator or bone query";
         else if(rejected.containsKey(owner.getGeoModel().ysmPhysics)) reason=rejected.get(owner.getGeoModel().ysmPhysics);
@@ -70,12 +69,20 @@ public final class GpuPhysics {
                 instances.put(parameters,instance);resources.add(instance);model.users++;
                 owner.ysmPhysics.partition(parameters,true);
             }
-            instance.root.set(root);instance.time=time;instance.paused=paused;instance.world=world;
-            instance.x=x;instance.y=y;instance.z=z;instance.fps=fps;instance.touched=System.nanoTime();
-            instance.blockCollisions=blockCollisions;
-            owner.ysmPhysics.update(parameters,root,time,paused,world,x,y,z,blockCollisions);
-            lastReason=geometry.ysmPhysics.joints.stream().anyMatch(j->j.parameters().bc())
-                    ?"GPU physics active; block-collision dependency groups use CPU":"GPU physics active";return true;
+            // A shadow/main/extra draw at the same simulation time must not replace
+            // the first pass's world-space targets with a different camera's pose.
+            if(instance.time!=time || instance.world!=world || instance.fps!=fps) {
+                instance.root.set(root);instance.time=time;instance.paused=paused;instance.world=world;
+                instance.x=x;instance.y=y;instance.z=z;instance.fps=fps;
+                instance.blockCollisions=blockCollisions;
+            }
+            instance.touched=System.nanoTime();
+            owner.ysmPhysics.update(parameters,instance.root,time,paused,world,instance.x,instance.y,instance.z,instance.blockCollisions);
+            boolean[] cpu=geometry.ysmPhysics.cpuCollisionIslands();
+            boolean anyGpu=geometry.ysmPhysics.joints.stream().anyMatch(j->!cpu[j.bone()]);
+            boolean anyCpu=geometry.ysmPhysics.joints.stream().anyMatch(j->cpu[j.bone()]);
+            lastReason=!anyGpu?"CPU collision physics active; GPU bone matrices"
+                    :anyCpu?"GPU physics active; collision dependency groups use CPU":"GPU physics active";return true;
         } catch(Exception | LinkageError e) {
             report("GPU physics initialization failed: "+e.getMessage());
             rejected.put(owner.getGeoModel().ysmPhysics,lastReason);deactivate(parameters);return false;
@@ -157,7 +164,7 @@ public final class GpuPhysics {
     }
 
     private static boolean[] gpuAffected(PhysDefinition definition) {
-        boolean[] result=definition.affected.clone(),cpu=definition.blockCollisionIslands();
+        boolean[] result=definition.affected.clone(),cpu=definition.cpuCollisionIslands();
         for(int i=0;i<result.length;i++) result[i] &= !cpu[i];
         return result;
     }
@@ -177,10 +184,10 @@ public final class GpuPhysics {
         return false;
     }
 
-    /** The contact prototype remains gated until moving/scaled contact parity passes. */
+    /** World-contact islands stay on CPU; the remaining islands solve on GPU. */
     static boolean supportsDefinition(PhysDefinition definition) {
         boolean[] cpu=definition.blockCollisionIslands();
-        return definition.cubes.isEmpty() && definition.joints.stream().anyMatch(joint->!cpu[joint.bone()]);
+        return definition.joints.stream().anyMatch(joint->!cpu[joint.bone()]);
     }
 
     /** Float-only contact fitting has not passed parity for anisotropically scaled collision models. */
@@ -190,7 +197,7 @@ public final class GpuPhysics {
             if(!Float.isFinite(p[i*12+component]) || Math.abs(p[i*12+component])<1e-6f) return false;
         if(definition.cubes.isEmpty()) return true;
         var scale=root.getScale(new Vector3f());
-        if(!uniform(scale.x,scale.y,scale.z)) return false;
+        if(root.determinant()<=0 || !uniform(scale.x,scale.y,scale.z)) return false;
         for(int i=0;i<definition.bones.size();i++) if(!uniform(p[i*12+6],p[i*12+7],p[i*12+8])) return false;
         return true;
     }
@@ -204,9 +211,8 @@ public final class GpuPhysics {
         final GpuPhysKernel kernel;
         final Matrix4f root=new Matrix4f();
         final Clock clock=new Clock();
-        final List<PhysCollider> colliders=new ArrayList<>();
         final Matrix4f[] animated;
-        double time,x,y,z,drawn=Double.NaN;
+        double time=Double.NaN,x,y,z,drawn=Double.NaN;
         Object world;
         int fps;
         boolean paused;
@@ -231,15 +237,9 @@ public final class GpuPhysics {
                 if(previous!=null && previous.distanceSquared(point)>16) rootJump=true;
             }
             clock.advance(time,paused,world,x,y,z,fps,rootJump);
-            colliders.clear();
-            boolean[] visible=new boolean[definition.bones.size()],children=new boolean[visible.length];
-            for(int i:definition.order) {
-                int parent=definition.bones.get(i).parentIdx,p=i*12;
-                boolean ancestor=parent<0 || children[parent],scaled=parameters[p+6]!=0 && parameters[p+7]!=0 && parameters[p+8]!=0;
-                visible[i]=ancestor && scaled && parameters[p+9]==0;children[i]=ancestor && scaled && parameters[p+10]==0;
-            }
-            for(var cube:definition.cubes) if(visible[cube.bone()]) colliders.add(new PhysCollider(cube.faces(),animated[cube.bone()]));
-            kernel.solve(parameters,root,renderRoot,colliders,clock.steps,clock.reset,1f/fps,clock.velocity,light);
+            // Contact islands have already been solved on CPU; no readback or
+            // duplicate collision solve is needed when building the final matrices.
+            kernel.solve(parameters,root,renderRoot,List.of(),clock.steps,clock.reset,1f/fps,clock.velocity,light);
             drawn=time;
         }
     }

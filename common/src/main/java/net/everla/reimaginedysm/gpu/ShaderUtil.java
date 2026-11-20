@@ -1,6 +1,7 @@
 package net.everla.reimaginedysm.gpu;
 
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.*;
+import com.mojang.blaze3d.platform.GlStateManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -59,5 +60,28 @@ public final class ShaderUtil {
             GL20.glDeleteShader(sh);
         }
         return prog;
+    }
+    /** Preserve indexed ranges, generic SSBO binding and the caller's GL program. */
+    public static class SavedComputeState implements AutoCloseable {
+        private final int program=GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
+        private final int generic=GL11.glGetInteger(GL43.GL_SHADER_STORAGE_BUFFER_BINDING);
+        private final int[] buffers;
+        private final long[] starts,sizes;
+        public SavedComputeState(int count) {
+            buffers=new int[count];starts=new long[count];sizes=new long[count];
+            for(int i=0;i<count;i++) {
+                buffers[i]=GL30.glGetIntegeri(GL43.GL_SHADER_STORAGE_BUFFER_BINDING,i);
+                starts[i]=GL32.glGetInteger64i(GL43.GL_SHADER_STORAGE_BUFFER_START,i);
+                sizes[i]=GL32.glGetInteger64i(GL43.GL_SHADER_STORAGE_BUFFER_SIZE,i);
+            }
+        }
+        @Override public void close() {
+            GlStateManager._glUseProgram(program);
+            for(int i=0;i<buffers.length;i++) {
+                if(buffers[i]!=0 && sizes[i]>0) GL30.glBindBufferRange(GL43.GL_SHADER_STORAGE_BUFFER,i,buffers[i],starts[i],sizes[i]);
+                else GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,i,buffers[i]);
+            }
+            GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER,generic);
+        }
     }
 }
