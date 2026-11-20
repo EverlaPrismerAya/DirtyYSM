@@ -28,9 +28,9 @@ Reimagined YSM 仅维护简体中文（`zh_cn`）和英语（`en_us`）两种语
 
 ## Goety / GR 饰品叠加层（Forge）
 
-参照 [showmeurhalo](https://github.com/EverlaPrismerAya/showmeurhalo) 的饰品渲染实现，原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`（需 RevelationFix 提供渲染器）。饰品跟随 YSM 头部定位骨骼，使用已安装模组的模型、贴图及效果，并遵守 Curios 外观槽和显示开关。
+参照 [showmeurhalo](https://github.com/EverlaPrismerAya/showmeurhalo) 的饰品渲染实现，原生支持 Goety 的 `unholy_hat`、`unholy_hat_halo`，以及 GR 的 `ascension_halo`、`broken_halo`、`halo_of_the_end`。饰品跟随 YSM 头部定位骨骼。
 
-模型动画、控制器或 Molang 函数中通过 `ysm.has_any_curios` 检测某个饰品 ID 时，该饰品由模型自行显示；标签查询 `has_any_curios_with_all_tags` / `has_any_curios_with_any_tag` 同样参与避让。字面量 ID／标签在加载时识别，动态拼接或变量传入的 ID 在查询实际执行时记录。模型切换、重载后重新判定。
+模型动画、控制器或 Molang 函数中通过 `ysm.has_any_curios` 检测如上某个饰品 ID 时，该饰品将交由模型自行显示；标签查询 `has_any_curios_with_all_tags` / `has_any_curios_with_any_tag` 同样参与避让。
 
 同时安装 showmeurhalo 时关闭其反射式 YSM 头部适配，并跳过它对已由原生层接管玩家的这些饰品的重复渲染；其他功能保留。
 
