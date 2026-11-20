@@ -44,6 +44,10 @@ public class C2SVersionCheckPacket {
     }
 
     public static void encode(C2SVersionCheckPacket message, FriendlyByteBuf buf) {
+        if (NetworkHandler.isOfficialServer()) {
+            buf.writeUtf(NetworkHandler.OFFICIAL_VERSION);
+            return;
+        }
         buf.writeUtf(message.version);
         if (message.supportsModelSyncFragments) {
             buf.writeUtf(MODEL_SYNC_FRAGMENT_BRAND);

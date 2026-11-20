@@ -30,6 +30,24 @@ public final class NetworkHandler {
     private static final Set<UUID> clientsSupportingModelSyncFragments = ConcurrentHashMap.newKeySet();
 
     public static final String VERSION = "2.7.1";
+    public static final String OFFICIAL_VERSION = "2.6.0";
+    public static final ResourceLocation OFFICIAL_CHANNEL_ID = new ResourceLocation(YesSteveModel.MOD_ID, "2_6_0");
+    private static volatile Connection clientProtocolConnection;
+
+    public static boolean isOfficialServer() { return isOfficialServer(clientProtocolConnection); }
+
+    public static boolean isOfficialServer(@Nullable Connection connection) {
+        return connection != null && ((ConnectionAccessor) connection).ysm$getChannel() != null
+                && OFFICIAL_VERSION.equals(((ConnectionAccessor) connection).ysm$getChannel().attr(CHANNEL_VERSION_KEY).get());
+    }
+
+    public static void selectClientProtocol(Connection connection) { clientProtocolConnection = connection; }
+
+    public static boolean supportsServerExtensions() { return isClientConnected() && !isOfficialServer(); }
+
+    public static boolean isOfficialPacket(int id) {
+        return (id >= 1 && id <= 9) || (id >= 15 && id <= 19) || (id >= 21 && id <= 23) || id == 51 || id == 52;
+    }
 
     public static final ResourceLocation CHANNEL_ID = new ResourceLocation(YesSteveModel.MOD_ID, VERSION.replace('.', '_'));
 
@@ -48,6 +66,7 @@ public final class NetworkHandler {
 
     public static void resetClientHandshake() {
         clientHandshakeComplete = false;
+        clientProtocolConnection = null;
         serverSupportsModelSyncFragments = false;
     }
 
@@ -85,13 +104,15 @@ public final class NetworkHandler {
         if (RuntimePolicy.isDisabled()) {
             return false;
         }
-        return connection != null && ((ConnectionAccessor) connection).ysm$getChannel() != null && VERSION.equals(((ConnectionAccessor) connection).ysm$getChannel().attr(CHANNEL_VERSION_KEY).get());
+        return connection != null && ((ConnectionAccessor) connection).ysm$getChannel() != null && (VERSION.equals(((ConnectionAccessor) connection).ysm$getChannel().attr(CHANNEL_VERSION_KEY).get())
+                || connection == clientProtocolConnection && isOfficialServer(connection));
     }
 
     private static <T> void register(int id, Class<T> type, java.util.function.BiConsumer<T,net.minecraft.network.FriendlyByteBuf> encode,
             java.util.function.Function<net.minecraft.network.FriendlyByteBuf,T> decode,java.util.function.BiConsumer<T,net.everla.reimaginedysm.api.network.PacketContext> handler,PacketDirection direction) {
         YSMChannel.register(id,type,encode,decode,(packet,context)-> {
-            if(context.isClientSide() && com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive())return;
+            if(context.isClientSide() && com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive()
+                    && (!(packet instanceof S2CVersionCheckPacket) || com.elfmcys.yesstevemodel.client.ClientOnlyMode.isForced())) return;
             handler.accept(packet,context);
         },direction);
     }
@@ -149,6 +170,9 @@ public final class NetworkHandler {
             int localId = Minecraft.getInstance().player == null ? -1 : Minecraft.getInstance().player.getId();
             if (isPrivateModelStatePacket(obj, localId)) return;
         }
+        if (isOfficialServer() && obj instanceof C2SUsePrivateModelPacket) {
+            obj = new C2SRequestSwitchModelPacket("default", "default");
+        }
         if (isClientConnected()) {
             YSMChannel.sendToServer(obj);
         }
@@ -164,8 +188,17 @@ public final class NetworkHandler {
 
     /** Explicitly rebuild the model session after local-only mode without replacing the game connection. */
     public static void restartModelSync(Connection connection) {
-        if(!com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() && connection!=null && connection.isConnected())
+        if(!com.elfmcys.yesstevemodel.client.ClientOnlyMode.isActive() && connection!=null && connection.isConnected()) {
+            if (isOfficialServer(connection)) {
+                selectClientProtocol(connection);
+                Minecraft.getInstance().execute(() -> {
+                    if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.sendSystemMessage(
+                            net.minecraft.network.chat.Component.translatable("message.yes_steve_model.official_reconnect"));
+                });
+                return;
+            }
             connection.send(toServerboundPacket(new C2SVersionCheckPacket(true)));
+        }
     }
 
     public static void sendVersionCheck(Connection connection) {

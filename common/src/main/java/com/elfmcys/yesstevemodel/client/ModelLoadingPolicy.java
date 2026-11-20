@@ -15,6 +15,7 @@ public final class ModelLoadingPolicy {
     private static volatile java.util.List<String> inUse = java.util.List.of();
     public static ModelLoadingMode get() {
         if(ClientOnlyMode.isActive())return com.elfmcys.yesstevemodel.config.ClientOnlyGeneralConfig.MODEL_LOADING_MODE.get();
+        if (NetworkHandler.isOfficialServer()) return ModelLoadingMode.FULL;
         if (NetworkHandler.isClientConnected())
             return serverMode == null ? ModelLoadingMode.POTATO : serverMode;
         if (Minecraft.getInstance().getSingleplayerServer() != null) return CommonConfig.MODEL_LOADING_MODE.get();

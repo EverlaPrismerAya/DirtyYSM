@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 public class TabButton extends AbstractWidget {
 
-    private final OptionGroup group;
+    private OptionGroup group;
     private final Consumer<OptionGroup> onSelect;
     private boolean selected;
     private boolean horizontal;
@@ -23,6 +23,11 @@ public class TabButton extends AbstractWidget {
 
     public OptionGroup getGroup() {
         return group;
+    }
+
+    public void replaceGroup(OptionGroup group) {
+        this.group = group;
+        setMessage(group.getTitle());
     }
 
     public void setSelected(boolean selected) {

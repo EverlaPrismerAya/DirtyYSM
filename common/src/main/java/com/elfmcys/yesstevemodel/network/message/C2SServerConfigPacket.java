@@ -20,8 +20,8 @@ public record C2SServerConfigPacket(List<String> fields) {
     public static void handle(C2SServerConfigPacket p,PacketContext c) {
         if(c.isServerSide())c.enqueueWork(()-> {
             var player=c.getSender();if(player==null)return;
-            if(!ServerConfigPanel.allowed(player)) {
-                NetworkHandler.sendToClientPlayer(new S2CServerConfigPacket(false,List.of(),"denied"),player);return;
+            if(!p.fields.isEmpty() && !ServerConfigPanel.allowed(player)) {
+                NetworkHandler.sendToClientPlayer(new S2CServerConfigPacket(false,ServerConfigPanel.snapshot(),"denied"),player);return;
             }
             String result="";
             try {
@@ -31,7 +31,7 @@ public record C2SServerConfigPacket(List<String> fields) {
                     result="saved";
                 }
             } catch(Exception ex) { result="invalid"; }
-            NetworkHandler.sendToClientPlayer(new S2CServerConfigPacket(true,ServerConfigPanel.snapshot(),result),player);
+            NetworkHandler.sendToClientPlayer(new S2CServerConfigPacket(ServerConfigPanel.allowed(player),ServerConfigPanel.snapshot(),result),player);
         });
     }
 }

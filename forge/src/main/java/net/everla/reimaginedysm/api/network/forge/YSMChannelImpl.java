@@ -40,12 +40,16 @@ public final class YSMChannelImpl {
     private static final AtomicInteger nextTransferId = new AtomicInteger();
 
     private static SimpleChannel channel;
+    private static SimpleChannel officialChannel;
+    private static final Set<Class<?>> officialPackets = new HashSet<>();
 
     private YSMChannelImpl() {
     }
 
     public static void init(ResourceLocation channelId, String version) {
         channel = NetworkRegistry.newSimpleChannel(channelId, () -> version, str -> true, str -> true);
+        officialChannel = NetworkRegistry.newSimpleChannel(NetworkHandler.OFFICIAL_CHANNEL_ID,
+                () -> NetworkHandler.OFFICIAL_VERSION, str -> true, str -> true);
         channel.registerMessage(FRAGMENT_DISCRIMINATOR, FragmentPacket.class,
                 FragmentPacket::encode, FragmentPacket::decode,
                 (packet, ctxSupplier) -> {
@@ -56,6 +60,18 @@ public final class YSMChannelImpl {
 
     public static <T> void register(int discriminator, Class<T> type, BiConsumer<T, FriendlyByteBuf> encoder, Function<FriendlyByteBuf, T> decoder, BiConsumer<T, PacketContext> handler, PacketDirection direction) {
         codecs.put(discriminator & 0xff, new LocalCodec<>(type, decoder, handler, direction));
+        if (NetworkHandler.isOfficialPacket(discriminator)) {
+            officialPackets.add(type);
+            officialChannel.registerMessage(discriminator, type, encoder, decoder, (msg, supplier) -> {
+                var context = supplier.get();
+                // Compatibility is client -> official server only. Never run official C2S handlers here.
+                if (context.getDirection() == NetworkDirection.PLAY_TO_CLIENT
+                        && (discriminator == 51 || NetworkHandler.isOfficialServer(context.getNetworkManager()))) {
+                    handler.accept(msg, new PacketContextImpl(supplier));
+                }
+                context.setPacketHandled(true);
+            }, Optional.of(toForge(direction)));
+        }
         channel.registerMessage(discriminator, type, encoder, decoder,
                 (msg, ctxSupplier) -> {
                     handler.accept(msg, new PacketContextImpl(ctxSupplier));
@@ -66,6 +82,10 @@ public final class YSMChannelImpl {
     }
 
     public static void sendToServer(Object packet) {
+        if (NetworkHandler.isOfficialServer()) {
+            if (officialPackets.contains(packet.getClass())) officialChannel.sendToServer(packet);
+            return;
+        }
         if (packet instanceof C2SModelSyncPayload && NetworkHandler.serverSupportsModelSyncFragments()) {
             byte[] encoded = encode(packet);
             if (encoded.length > FRAGMENT_DATA_SIZE) {
@@ -115,6 +135,10 @@ public final class YSMChannelImpl {
     }
 
     public static Packet<?> toServerboundPacket(Object packet) {
+        if (NetworkHandler.isOfficialServer()) {
+            if (!officialPackets.contains(packet.getClass())) throw new IllegalArgumentException("Unsupported official YSM packet: " + packet.getClass());
+            return officialChannel.toVanillaPacket(packet, NetworkDirection.PLAY_TO_SERVER);
+        }
         return channel.toVanillaPacket(packet, NetworkDirection.PLAY_TO_SERVER);
     }
 

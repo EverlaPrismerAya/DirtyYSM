@@ -501,6 +501,7 @@
   "gui.yes_steve_model.server_config.title": "服务端配置管理",
   "gui.yes_steve_model.server_config.open": "打开面板",
   "gui.yes_steve_model.server_config.loading": "正在等待服务端响应…",
+  "gui.yes_steve_model.server_config.readonly": "仅可预览：需要管理员权限才能修改",
   "gui.yes_steve_model.server_config.ready": "当前服务端配置",
   "gui.yes_steve_model.server_config.denied": "权限不足，需要管理员权限",
   "gui.yes_steve_model.server_config.saved": "已保存至服务端 common 配置",
@@ -532,5 +533,7 @@
   "gui.yes_steve_model.config.physics_experimental_gpu": "实验性GPU加速",
   "gui.yes_steve_model.config.physics_experimental_gpu.desc": "实验性 GPU 物理，支持 Oculus/Iris 光影。碰撞相关组由 CPU 求解，GPU 生成矩阵；不保证提速。",
   "gui.yes_steve_model.config.physics_fps": "物理模拟帧率",
-  "gui.yes_steve_model.config.physics_fps.desc": "每秒物理解算次数，整数 0–120，默认 60。0 表示禁用模拟并使用原动画。较低帧率会降低精度，可能出现明显跳动。"
+  "gui.yes_steve_model.config.physics_fps.desc": "每秒物理解算次数，整数 0–120，默认 60。0 表示禁用模拟并使用原动画。较低帧率会降低精度，可能出现明显跳动。",
+  "message.yes_steve_model.official_reconnect": "关闭纯客户端模式时暂不支持在官方YSM服务器重新获取模型列表，请重新连接服务器以恢复联机模型同步",
+  "message.yes_steve_model.official_environment": "当前运行于原版YSM环境下，部分功能可能不可用"
 }

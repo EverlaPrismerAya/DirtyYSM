@@ -501,6 +501,7 @@
   "gui.yes_steve_model.server_config.title": "Server configuration",
   "gui.yes_steve_model.server_config.open": "Open panel",
   "gui.yes_steve_model.server_config.loading": "Waiting for server…",
+  "gui.yes_steve_model.server_config.readonly": "Preview only: administrator permission required to edit",
   "gui.yes_steve_model.server_config.ready": "Current server configuration",
   "gui.yes_steve_model.server_config.denied": "Administrator permission required",
   "gui.yes_steve_model.server_config.saved": "Saved to server COMMON configuration",
@@ -532,5 +533,7 @@
   "gui.yes_steve_model.config.physics_experimental_gpu": "Experimental GPU acceleration",
   "gui.yes_steve_model.config.physics_experimental_gpu.desc": "Experimental GPU physics with Oculus/Iris support. Collision groups solve on CPU with GPU matrices; no guaranteed speedup.",
   "gui.yes_steve_model.config.physics_fps": "Physics simulation frame rate",
-  "gui.yes_steve_model.config.physics_fps.desc": "Physics steps per second, integer 0–120; default 60. 0 disables simulation and restores animation. Lower rates reduce accuracy and can cause visible stepping."
+  "gui.yes_steve_model.config.physics_fps.desc": "Physics steps per second, integer 0–120; default 60. 0 disables simulation and restores animation. Lower rates reduce accuracy and can cause visible stepping.",
+  "message.yes_steve_model.official_reconnect": "Refreshing the model list on an official YSM server when disabling client-only mode is not currently supported. Reconnect to restore model synchronization.",
+  "message.yes_steve_model.official_environment": "Currently running in an official YSM environment. Some features may be unavailable."
 }

@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.elfmcys.yesstevemodel.model.format.ServerModelData;
 import com.elfmcys.yesstevemodel.model.format.ServerModelInfo;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
+import com.elfmcys.yesstevemodel.network.ModelSyncWireFormat;
 import com.elfmcys.yesstevemodel.network.message.C2SModelSyncPayload;
 import com.elfmcys.yesstevemodel.network.message.C2SUsePrivateModelPacket;
 import com.elfmcys.yesstevemodel.resource.YSMBinaryDeserializer;
@@ -143,6 +144,7 @@ public class ClientModelManager {
         public volatile boolean requested;
         public volatile long requestToken;
         public final int generation;
+        public final Map<String, Boolean> aliases = new LinkedHashMap<>();
 
         public ServerModelContext(long hash1, long hash2, String modelId, boolean isAuth, int isCustomSkinModel, int version, int generation) {
             this.uuid = new UUID(hash1, hash2);
@@ -153,6 +155,7 @@ public class ClientModelManager {
             this.isCustomSkinModel = isCustomSkinModel;
             this.version = version;
             this.generation = generation;
+            this.aliases.put(modelId, isAuth);
         }
     }
 
@@ -365,6 +368,7 @@ public class ClientModelManager {
         System.arraycopy(decryptedBuffer, decryptedBuffer.length - 56, key1, 0, 56);
         syncStep = 2;
 
+        loadPrivateModels();
         YesSteveModel.LOGGER.info("[YSM] Exchanged Key1. Preparing to send Packet 02.");
         onSyncProgress(-1); // Preparing GUI stage
 
@@ -403,8 +407,12 @@ public class ClientModelManager {
         boolean useLocalModelCatalog = Minecraft.getInstance().isLocalServer();
         Map<UUID, File> localCacheMap = useLocalModelCatalog ? Map.of() : YSMClientCache.buildCacheIndex(cacheDir, clientKey);
 
-        ModelLoadingPolicy.catalog(com.elfmcys.yesstevemodel.config.ModelLoadingMode.values()[buf.readVarInt()]);
+        boolean official = NetworkHandler.isOfficialServer();
+        List<ServerModelContext> officialDownloads = new ArrayList<>();
+        List<Runnable> officialCacheLoads = new ArrayList<>();
+        ModelLoadingPolicy.catalog(official ? ModelLoadingMode.FULL : ModelLoadingMode.values()[buf.readVarInt()]);
         int unkSize = buf.readVarInt();
+        if (type != 3 || unkSize < 0 || unkSize > 100000) throw new IllegalArgumentException("Invalid model catalog");
         onSyncProgress(unkSize);
 
         if (useLocalModelCatalog || ClientOnlyMode.isForced()) {
@@ -417,22 +425,42 @@ public class ClientModelManager {
         List<Boolean> isAuthList = new ArrayList<>();
 
         for (int i = 0; i < unkSize; i++) {
-            long hash1 = buf.readVarLong();
-            long hash2 = buf.readVarLong();
-
-            String modelId = buf.readString();
-            boolean isAuth = buf.readVarInt() == 1;// isAuth
-            int isCustomSkinModel = buf.readVarInt();// is misc/2_steve misc/1_alex
-//            System.out.println("Received model hash: " + mHash + ", id: " + modelId + ", unk1: " + isAuth + ", unk2: " + isCustomSkinModel);
-            int version = buf.readVarInt(); // model cache format
-            ModelCatalogMetadata metadata = CATALOG_GSON.fromJson(buf.readString(), ModelCatalogMetadata.class);
+            ModelSyncWireFormat.Entry entry = ModelSyncWireFormat.readEntry(buf, official);
+            long hash1 = entry.hash1(), hash2 = entry.hash2();
+            String modelId = entry.id();
+            boolean isAuth = entry.auth();
+            int isCustomSkinModel = entry.customSkin(), version = entry.version();
+            ModelCatalogMetadata metadata = official ? null : CATALOG_GSON.fromJson(entry.metadata(), ModelCatalogMetadata.class);
             ServerModelContext ctx = new ServerModelContext(hash1, hash2, modelId, isAuth, isCustomSkinModel, version, generation);
             ctx.textureCount = metadata == null || metadata.textures == null ? 0 : metadata.textures.length;
-            serverModels.put(ctx.uuid, ctx);
+            ServerModelContext previousContext = official ? serverModels.putIfAbsent(ctx.uuid, ctx) : serverModels.put(ctx.uuid, ctx);
             validServerModelIds.add(modelId);
+            if (official && previousContext != null) {
+                previousContext.aliases.put(modelId, isAuth);
+                continue;
+            }
 
             if (ClientOnlyMode.isForced() && localOnlyModelIds.contains(modelId)) {
                 YesSteveModel.LOGGER.info("[YSM] Model id '{}' exists locally, keeping the local copy and ignoring the server one.", modelId);
+                continue;
+            }
+
+            if (official) {
+                File cached = localCacheMap.get(ctx.uuid);
+                boolean cacheLoaded = false;
+                if (YSMClientCache.verifyFileContent(cached, hash1, hash2)) {
+                    try {
+                        CachePayload payload = YsmCrypt.readInPlace(Files.readAllBytes(cached.toPath()), clientKey);
+                        officialCacheLoads.add(() -> ctx.aliases.forEach((id, auth) -> parseAndLoadModel(payload, id, auth, generation)));
+                        cacheLoaded = true;
+                    } catch (Exception invalidCache) {
+                        YesSteveModel.LOGGER.warn("[YSM] Invalid official model cache; downloading {} again", modelId);
+                    }
+                }
+                if (!cacheLoaded) {
+                    ctx.requested = true;
+                    officialDownloads.add(ctx);
+                }
                 continue;
             }
 
@@ -529,8 +557,9 @@ public class ClientModelManager {
         }
 
         syncStep = 3;
-        pendingModelsCount.set(0);
-        if (!isLazyModelLoadingEnabled()) requestAllLazyModels();
+        pendingModelsCount.set(officialDownloads.size());
+        officialCacheLoads.forEach(modelPhraseExecutor::execute);
+        if (!official && !isLazyModelLoadingEnabled()) requestAllLazyModels();
 
         int garbageLen = 16 + SECURE_RANDOM.nextInt(48);
         byte[] garbage = new byte[garbageLen];
@@ -540,7 +569,9 @@ public class ClientModelManager {
             outBuf.writeGarbageHeader(garbageLen, garbage);
             outBuf.getRawBuf().writeByte(0x04);
 
-            outBuf.writeVarInt(0); // Catalog acknowledged; no eager model downloads.
+            ModelSyncWireFormat.writeOfficialRequests(outBuf, officialDownloads.stream().map(download ->
+                    new ModelSyncWireFormat.Entry(download.hash1, download.hash2, download.modelId,
+                            download.isAuth, download.isCustomSkinModel, download.version, null)).toList());
 
             YsmCrypt.EncryptedPacket result = YsmCrypt.encrypt(outBuf.toArray(), key1, false);
             sendModelFile(ByteBuffer.wrap(result.data()));
@@ -574,9 +605,6 @@ public class ClientModelManager {
         int chunkOffset = buf.readVarInt();
         int chunkLength = buf.readVarInt();
 
-        if (totalSize <= 0 || chunkOffset < 0 || chunkLength < 0 || chunkOffset > totalSize - chunkLength || chunkLength > buf.getRawBuf().readableBytes()) {
-            throw new IllegalArgumentException("Invalid model chunk bounds for " + uuid);
-        }
 
         Path completedFile;
         synchronized (ctx) {
@@ -585,6 +613,7 @@ public class ClientModelManager {
                 return;
             }
 
+            ModelSyncWireFormat.validateChunk(totalSize, chunkOffset, chunkLength, buf.getRawBuf().readableBytes(), ctx.bytesReceived);
             if (ctx.downloadFile == null) {
                 String folder = currentCacheFolderName != null ? currentCacheFolderName : "default_cache";
                 Path cacheDir = ServerModelManager.CACHE_CLIENT.resolve(folder);
@@ -648,6 +677,11 @@ public class ClientModelManager {
                     rawModel.footer.unkInt2 = reader.readVarInt();
                 }
 
+            if (NetworkHandler.isOfficialServer() && generation == modelLoadGeneration.get()) {
+                ServerModelInfo info = YSMClientMapper.buildModelInfo(rawModel);
+                Path shared = SharedModelCache.store(info.getModelHash(), cachePayload);
+                lazyModelSources.put(modelId, new LazyModelSource(shared, SharedModelCache.key(), info, isAuth, false));
+            }
             // 组装到客户端模型
             ClientModelInfo parsedBundle = YSMClientMapper.buildParsedBundle(rawModel, modelId);
             if (generation == modelLoadGeneration.get()) {
@@ -1317,7 +1351,11 @@ public class ClientModelManager {
                 YesSteveModel.LOGGER.info("[YSM] Downloaded & Cached: " + cacheFile.toAbsolutePath());
                 CachePayload cachePayload = YsmCrypt.readInPlace(cachedFileData, clientKey);
                 LazyModelSource previous = lazyModelSources.get(context.modelId);
-                if (previous == null) return;
+                if (NetworkHandler.isOfficialServer() || previous == null) {
+                    // Official catalogs contain hashes and IDs, without our lazy catalog metadata.
+                    context.aliases.forEach((id, auth) -> parseAndLoadModel(cachePayload, id, auth, context.generation));
+                    return;
+                }
                 Path sharedCache = SharedModelCache.store(previous.modelInfo().getModelHash(), cachePayload);
                 for (Map.Entry<String, LazyModelSource> entry : lazyModelSources.entrySet()) {
                     LazyModelSource alias = entry.getValue();
@@ -1522,7 +1560,7 @@ public class ClientModelManager {
 
     private static void requestRemoteModel(String modelId, Request reason) {
         if(ClientOnlyMode.isActive())return;
-        if (syncStep != 3 || key1 == null) return;
+        if (NetworkHandler.isOfficialServer() || syncStep != 3 || key1 == null) return;
         LazyModelSource requestedSource = lazyModelSources.get(modelId);
         if (requestedSource == null) return;
         for (ServerModelContext context : serverModels.values()) {

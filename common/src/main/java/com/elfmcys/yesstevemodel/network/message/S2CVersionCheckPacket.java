@@ -4,6 +4,9 @@ import com.elfmcys.yesstevemodel.client.ClientModelManager;
 import com.elfmcys.yesstevemodel.client.ClientOnlyMode;
 import com.elfmcys.yesstevemodel.network.NetworkHandler;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.everla.reimaginedysm.api.network.PacketContext;
 
 public class S2CVersionCheckPacket {
@@ -48,20 +51,24 @@ public class S2CVersionCheckPacket {
     }
 
     public static void handle(S2CVersionCheckPacket message, PacketContext ctx) {
-        if (!NetworkHandler.VERSION.equals(message.version)) {
+        if (!NetworkHandler.VERSION.equals(message.version) && !NetworkHandler.OFFICIAL_VERSION.equals(message.version)) {
             ctx.enqueueWork(() -> ctx.getConnection().disconnect(net.minecraft.network.chat.Component.literal("Reimagined YSM protocol mismatch: expected " + NetworkHandler.VERSION + ", received " + message.version)));
             return;
         }
-        NetworkHandler.setServerSupportsModelSyncFragments(message.supportsModelSyncFragments);
-        if (NetworkHandler.setChannelVersion(ctx.getConnection(), message.version)) {
-            ctx.enqueueWork(() -> {
-                ClientOnlyMode.leaveStandalone();
+        NetworkHandler.selectClientProtocol(ctx.getConnection());
+        NetworkHandler.setServerSupportsModelSyncFragments(NetworkHandler.VERSION.equals(message.version) && message.supportsModelSyncFragments);
+        boolean first = NetworkHandler.setChannelVersion(ctx.getConnection(), message.version);
+        ctx.enqueueWork(() -> {
+            ClientOnlyMode.leaveStandalone();
+            if (first) {
                 ClientModelManager.onSyncConnected();
-            });
-        }
-        if (NetworkHandler.VERSION.equals(message.version)) {
+                if (NetworkHandler.OFFICIAL_VERSION.equals(message.version)) {
+                    Minecraft.getInstance().gui.getChat().addMessage(Component.translatable(
+                            "message.yes_steve_model.official_environment").withStyle(ChatFormatting.YELLOW));
+                }
+            }
             NetworkHandler.markClientHandshakeComplete();
-        }
-        NetworkHandler.sendVersionCheck(ctx.getConnection());
+            NetworkHandler.sendVersionCheck(ctx.getConnection());
+        });
     }
 }

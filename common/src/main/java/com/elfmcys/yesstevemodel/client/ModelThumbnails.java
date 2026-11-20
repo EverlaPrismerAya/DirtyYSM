@@ -26,7 +26,7 @@ public final class ModelThumbnails {
         List<String> next=List.copyOf(ids);
         if(next.equals(visible)) return;
         visible=next;page++;pending.clear();localGenerating.clear();io.getQueue().clear();remoteSentPage=-1;nextRetry=0;
-        if(NetworkHandler.isClientConnected() && !ClientOnlyMode.isForced())
+        if(NetworkHandler.supportsServerExtensions() && !ClientOnlyMode.isForced())
             NetworkHandler.sendToServer(new C2SModelThumbnailsPacket(page,List.of()));
         request();
     }
@@ -47,16 +47,16 @@ public final class ModelThumbnails {
                 byte[] cached=data;
                 Minecraft.getInstance().execute(() -> {
                     if(page!=token || !visible.contains(id)) return;
-                    if(cached!=null && accept(hash,cached)) { pending.remove(id); if(NetworkHandler.isClientConnected() && !ClientOnlyMode.isForced()) fetchRemote(token); return; }
+                    if(cached!=null && accept(hash,cached)) { pending.remove(id); if(NetworkHandler.supportsServerExtensions() && !ClientOnlyMode.isForced()) fetchRemote(token); return; }
                     pending.remove(id);
-                    if(NetworkHandler.isClientConnected() && !ClientOnlyMode.isForced() && !ClientModelManager.isPrivateModel(id)) {
+                    if(NetworkHandler.supportsServerExtensions() && !ClientOnlyMode.isForced() && !ClientModelManager.isPrivateModel(id)) {
                         // Requests are batched after all cache lookups for this page complete.
                         fetchRemote(token);
                     } else {
                         localGenerating.add(id);
                         ModelThumbnailService.request(hash,()->ClientModelManager.readThumbnailModel(id),
                                 ()->page==token, png->Minecraft.getInstance().execute(()->receive(token,id,hash,png)));
-                        if(NetworkHandler.isClientConnected() && !ClientOnlyMode.isForced()) fetchRemote(token);
+                        if(NetworkHandler.supportsServerExtensions() && !ClientOnlyMode.isForced()) fetchRemote(token);
                     }
                 });
             });

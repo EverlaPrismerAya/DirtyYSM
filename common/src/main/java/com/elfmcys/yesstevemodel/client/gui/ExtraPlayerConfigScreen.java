@@ -14,6 +14,27 @@ import net.everla.reimaginedysm.gui.components.SliderOptionRow;
 
 public class ExtraPlayerConfigScreen extends OptionScreen {
     private Option<Boolean> forceModeOption;
+    private final ServerConfigScreen serverConfig = new ServerConfigScreen();
+    private boolean requestedServerConfig;
+
+    @Override protected void init() {
+        super.init();
+        if (!requestedServerConfig && ServerConfigScreen.available()) {
+            requestedServerConfig=true;
+            serverConfig.request();
+        }
+    }
+    public void receiveServerConfig(com.elfmcys.yesstevemodel.network.message.S2CServerConfigPacket packet) {
+        serverConfig.accept(packet);
+        // Replace only server rows so unrelated pending client edits survive the response.
+        for (int i=0;i<groups.size();i++) if (groups.get(i).getTranslationKey().equals("server_admin")) {
+            OptionGroup previous=groups.get(i), replacement=serverConfig.group();
+            groups.set(i,replacement);
+            for (var tab:tabButtons) if (tab.getGroup()==previous) tab.replaceGroup(replacement);
+            if (activeGroup==previous) selectGroup(replacement);
+            break;
+        }
+    }
 
     public ExtraPlayerConfigScreen(@Nullable PlayerModelScreen modelScreen) {
         super(Component.literal("Reimagined YSM"), modelScreen);
@@ -24,10 +45,11 @@ public class ExtraPlayerConfigScreen extends OptionScreen {
                 ? "gui.yes_steve_model.config.profile.local" : "gui.yes_steve_model.config.profile.normal"));
     }
     @Override protected void onApply() {
+        serverConfig.apply();
         boolean old=com.elfmcys.yesstevemodel.client.ClientOnlyMode.isForced();
         // Commit the current profile first; switching modes must not redirect pending settings.
         for(OptionGroup group:groups) for(var row:group.getRows()) {
-            if(row.getOption()!=null && row.getOption()!=forceModeOption)row.getOption().apply();
+            if(!group.getTranslationKey().equals("server_admin") && row.getOption()!=null && row.getOption()!=forceModeOption)row.getOption().apply();
         }
         forceModeOption.apply();
         GeneralConfig.FORCE_CLIENT_MODE.save();
@@ -70,15 +92,7 @@ public class ExtraPlayerConfigScreen extends OptionScreen {
                 .add(new EnumOptionRow<>(0, 0, 0, 22, Option.ofEnum("model_info_screen_mode", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.MODEL_INFO_SCREEN_MODE)), GeneralConfig.ModelInfoScreenMode.values()))
                 .add(new BooleanOptionRow(0, 0, 0, 22, Option.ofBoolean("blur_gui", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.BLUR_GUI))));
 
-        if(ServerConfigScreen.available()) {
-            groups.add(new OptionGroup("server_admin").add(new net.everla.reimaginedysm.gui.OptionRow<Object>(0,0,0,24,null) {
-                @Override public Component getMessage() { return ServerConfigScreen.text("title"); }
-                @Override protected void renderControl(net.minecraft.client.gui.GuiGraphics g,int x,int y,float pt) {
-                    g.drawString(net.minecraft.client.Minecraft.getInstance().font,ServerConfigScreen.text("open"),controlX(),controlY()+4,-1);
-                }
-                @Override public void onClick(double x,double y) { ServerConfigScreen.open(ExtraPlayerConfigScreen.this); }
-            }));
-        }
+        if(ServerConfigScreen.available()) groups.add(serverConfig.group());
         groups.add(general);
         groups.add(rendering);
         groups.add(performance);

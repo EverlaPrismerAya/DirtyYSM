@@ -159,3 +159,15 @@ tasks.register('checkYsmGpuPhysics', JavaExec) {
     if (project.hasProperty('gpuContactPrototype')) systemProperty 'ysm.gpuContactPrototype', 'true'
     if (project.hasProperty('physicsModel')) systemProperty 'ysm.physicsModel', project.property('physicsModel')
 }
+
+// Optional -PofficialYsmJar points to the unmodified 2.6.5 Forge release for bytecode comparison.
+tasks.register('checkOfficialProtocol', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass = 'com.elfmcys.yesstevemodel.client.OfficialProtocolCheck'
+    enableAssertions = true
+    systemProperty 'ysm.protocolFixtures', file('src/test/resources/official-ysm-2.6.5').absolutePath
+    if (project.hasProperty('officialYsmJar')) systemProperty 'ysm.officialJar', rootProject.file(project.property('officialYsmJar')).absolutePath
+    if (project.hasProperty('writeProtocolFixtures')) systemProperty 'ysm.writeProtocolFixtures', 'true'
+}
+tasks.named('check') { dependsOn 'checkOfficialProtocol' }
