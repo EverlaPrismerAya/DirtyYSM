@@ -28,6 +28,7 @@ public class EquippedItemAllTags extends LivingEntityFunction {
             if (key == null) {
                 return null;
             }
+            net.everla.reimaginedysm.compat.ModelAccessoryOverrides.recordHeadQuery(context.entity(), slotType, key, true);
             if (!stack.is(TagKey.create(Registries.ITEM, key))) {
                 return false;
             }

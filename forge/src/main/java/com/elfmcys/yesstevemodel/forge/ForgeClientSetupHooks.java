@@ -64,7 +64,10 @@ public final class ForgeClientSetupHooks {
             CuriosCompat.init();
             if (net.minecraftforge.fml.ModList.get().isLoaded("curios")
                     && (net.minecraftforge.fml.ModList.get().isLoaded("goety")
-                    || net.minecraftforge.fml.ModList.get().isLoaded("goety_revelation"))) {
+                    || net.minecraftforge.fml.ModList.get().isLoaded("goety_revelation")
+                    || net.minecraftforge.fml.ModList.get().isLoaded("starfantasy_goety")
+                    || net.minecraftforge.fml.ModList.get().isLoaded("esoteric_spell")
+                    || net.minecraftforge.fml.ModList.get().isLoaded("fantasy_ending"))) {
                 net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(
                         net.everla.reimaginedysm.compat.goety.GoetyAccessoryLayer.class);
             }

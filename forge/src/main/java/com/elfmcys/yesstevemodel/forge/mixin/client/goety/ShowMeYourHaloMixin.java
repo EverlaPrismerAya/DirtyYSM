@@ -4,7 +4,6 @@ import net.everla.reimaginedysm.compat.goety.GoetyAccessoryLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +24,7 @@ public abstract class ShowMeYourHaloMixin {
             PoseStack poses, RenderLayerParent<?, ?> parent, MultiBufferSource buffers, int light,
             @Coerce Object parameters, CallbackInfo ci) {
         if (slot.entity() instanceof Player player && GoetyAccessoryLayer.rendered(player)
-                && GoetyAccessoryLayer.isSupported(BuiltInRegistries.ITEM.getKey(stack.getItem()))) ci.cancel();
+                && GoetyAccessoryLayer.isSupported(stack)) ci.cancel();
     }
 
     @Inject(method = "isReplaying", at = @At("HEAD"), cancellable = true, remap = false)

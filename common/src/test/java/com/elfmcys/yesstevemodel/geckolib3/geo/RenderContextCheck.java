@@ -3,10 +3,19 @@ package com.elfmcys.yesstevemodel.geckolib3.geo;
 import com.elfmcys.yesstevemodel.client.renderer.ModelPreviewRenderer;
 import net.everla.ysmPhysLib.WorldPhysicsContext;
 import org.joml.Matrix4f;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 
 /** Run with :common:checkRenderContext; no Minecraft instance or GL context needed. */
 public final class RenderContextCheck {
     public static void main(String[] args) {
+        var body = new BufferBuilder(256);
+        var outline = new BufferBuilder(256);
+        assert NativeModelRenderer.isGpuBuffer(body, 1) : "ordinary model lost GPU rendering";
+        assert !NativeModelRenderer.isGpuBuffer(VertexMultiConsumer.create(outline, body), 1)
+                : "glowing entity bypassed its outline consumer";
+        assert !NativeModelRenderer.isGpuBuffer(body, 0) : "transparent body became an opaque GPU draw";
+        assert !NativeModelRenderer.isGpuBuffer(body, .15f) : "translucent body lost buffered blending";
         // ToroHealth calls the dispatcher directly, without either preview flag.
         // First-person arms outside the world pass must also use buffered drawing.
         assert NativeModelRenderer.isPreview() : "unmarked inventory/HUD/arm draw reached GPU path";
@@ -32,6 +41,6 @@ public final class RenderContextCheck {
             assert !NativeModelRenderer.isPreview() : "nested preview changed world rendering";
         } finally {WorldPhysicsContext.end();}
         assert NativeModelRenderer.isPreview() : "world scope leaked into UI";
-        System.out.println("PASS: GPU world/shadow gate; FirstPerson body, inventory, ToroHealth HUD, paper doll and arms use CPU rendering");
+        System.out.println("PASS: GPU world/shadow gate; outline/multi-consumers and transparent bodies retain buffered rendering");
     }
 }

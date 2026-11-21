@@ -41,6 +41,9 @@ public class AnimatedGeoModel {
 
     private final List<IBone> haloBones;
     private final List<IBone> odamaneHaloBones;
+    private final List<IBone> fantasyHaloBones;
+    private final List<IBone> esotericHaloBones;
+    private final List<IBone> fantasyEndingHaloBones;
     private final List<IBone> youkaiHeadBones;
 
     @NotNull
@@ -112,6 +115,9 @@ public class AnimatedGeoModel {
         this.headBones = lookupBones(data.headIds);
         this.haloBones = lookupLocator("HaloLocator");
         this.odamaneHaloBones = lookupLocator("OdamaneHaloLocator");
+        this.fantasyHaloBones = lookupLocator("FantasyHaloLocator");
+        this.esotericHaloBones = lookupLocator("EsotericHaloLocator");
+        this.fantasyEndingHaloBones = lookupLocator("FantasyEndingHaloLocator");
         this.youkaiHeadBones = lookupLocator("YoukaiHeadLocator");
         this.leftHandBones = lookupBones(data.leftHandIds);
         this.rightHandBones = lookupBones(data.rightHandIds);
@@ -156,6 +162,12 @@ public class AnimatedGeoModel {
     public List<IBone> haloBones() { return this.haloBones; }
 
     public List<IBone> odamaneHaloBones() { return this.odamaneHaloBones; }
+
+    public List<IBone> fantasyHaloBones() { return this.fantasyHaloBones; }
+
+    public List<IBone> esotericHaloBones() { return this.esotericHaloBones; }
+
+    public List<IBone> fantasyEndingHaloBones() { return this.fantasyEndingHaloBones; }
 
     public List<IBone> youkaiHeadBones() { return this.youkaiHeadBones; }
 

@@ -9,6 +9,7 @@ import com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel;
 import com.elfmcys.yesstevemodel.util.log.ChatLogger;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.LightTexture;
 import org.joml.Matrix3f;
@@ -47,6 +48,12 @@ public class NativeModelRenderer {
         return globally || isGpuPass(firstPersonBody);
     }
 
+    static boolean isGpuBuffer(VertexConsumer buffer, float alpha) {
+        // Outline and multi-consumers must receive vertices (including invisible,
+        // outline-only entities). Direct GPU draws cannot reproduce their passes.
+        return buffer instanceof BufferBuilder && alpha == 1.0f;
+    }
+
     public static void renderMesh(VertexConsumer buffer, PoseStack.Pose pose, GeoModel model, float[] boneParams, float[] stateBuffer, int textureIndex, int renderPartMask, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         renderMesh(buffer, pose, model, boneParams, stateBuffer, textureIndex, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, null);
     }
@@ -58,7 +65,7 @@ public class NativeModelRenderer {
 
         // GUI previews, including the HUD paper doll, share deferred buffers and
         // shader state with name tags and other UI. Submit them through that buffer.
-        if (isGpuPass(FirstPersonCompat.isFirstPersonActive(), com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER_GLOBALLY).get()) && textureLocation != null && NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get() && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) {
+        if (isGpuBuffer(buffer, alpha) && isGpuPass(FirstPersonCompat.isFirstPersonActive(), com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER_GLOBALLY).get()) && textureLocation != null && NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get() && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) {
 
             if(!GpuCapability.isAvailable())
             {

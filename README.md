@@ -95,10 +95,25 @@ Head
 
 同时安装 showmeurhalo 时关闭其反射式 YSM 头部适配，并跳过它对已由原生层接管玩家的这些饰品的重复渲染；其他功能保留。
 
-### Youkai’s Homecoming 头饰兼容（仅Forge）
+### 诡厄巫法：星翼幻想 饰品叠加层（仅Forge）
+
+支持 `starfantasy_goety:halo_of_apostle` 标签内的使徒光环和 `starfantasy_goety:halo_of_hades`。通过原模组的 Curios 渲染器保留贴图、动画及特效。
+
+特殊定位组 `FantasyHaloLocator` 控制这些光环的位置、旋转、缩放及父级变换；缺少时沿用头部定位。
+
+按 Curios 栏位顺序仅选择最靠前的一个已装备光环；任意栏位装备哈迪斯光环时仅选择最靠前的哈迪斯光环。
+
+### 秘法法术 背后饰品叠加层（仅Forge）
+
+`esoteric_spell:rising_inolia_ring` 使用 `EsotericHaloLocator`。与终末之环一样按身体定位，继承定位组枢轴、旋转、缩放及全部父级变换；缺少定位组时沿用身体主骨骼和原生渲染原点。
+
+### 梦幻终焉 背后饰品叠加层（仅Forge）
+
+`fantasy_ending:the_domain_of_fade` 使用 `FantasyEndingHaloLocator`，逻辑同秘法法术。
+
+### 妖怪们的归家 头饰叠加层（仅Forge）
 
 允许玩家模型叠加此模组的发饰与头饰。模型存在 `YoukaiHeadLocator` 时，优先使用其枢轴位置、旋转、缩放和父级变换；缺少时使用默认头部骨骼。
-
 
 ## 构建
 

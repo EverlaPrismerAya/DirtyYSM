@@ -66,6 +66,7 @@ dependencies {
     modCompileOnly ":create:1.20.1-6.0.8"
     modCompileOnly ":simplehats-forge:1.20.1-0.4.0a"
     modCompileOnly ":accessories-neoforge:1.0.0-beta.48+1.20.1"
+    modCompileOnly ":esoteric_spell:1.3.9-all"
 
     forgeRuntimeLibrary "com.github.TartaricAlkaline:ImageStream:-SNAPSHOT"
     include "com.github.TartaricAlkaline:ImageStream:-SNAPSHOT"
@@ -97,5 +98,16 @@ shadowJar {
 
 remapJar {
     input.set shadowJar.archiveFile
+}
+
+// Opt-in real OpenGL regression; does not require a running Minecraft client.
+tasks.register('checkFantasyEndingHalo', JavaExec) {
+    dependsOn testClasses
+    // Use standalone Minecraft classes: patched Forge registries require ModLauncher.
+    classpath = files(sourceSets.test.output, sourceSets.main.output) +
+            project(':common').sourceSets.test.runtimeClasspath + project(':common').sourceSets.main.compileClasspath +
+            project(':common').configurations.physicsGpuNatives
+    mainClass = 'net.everla.reimaginedysm.compat.goety.FantasyEndingHaloRenderCheck'
+    enableAssertions = true
 }
 

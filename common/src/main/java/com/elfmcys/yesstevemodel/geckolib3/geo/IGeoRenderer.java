@@ -28,12 +28,15 @@ public interface IGeoRenderer<T extends AnimatableEntity<?>> {
     }
 
     default void renderWithBoneAndRenderType(AnimatedGeoModel model, T animatable, float partialTick, RenderType renderType, PoseStack poseStack, @Nullable MultiBufferSource bufferSource, int i, @Nullable VertexConsumer vertexConsumer, int i2, int i3, float f2, float f3, float f4, float f5) {
+        // Check at geometry submission too: callers can supply a normal render type
+        // directly, and layers may have changed visibility since type selection.
+        if (animatable.getEntity().isInvisible() && !renderType.isOutline()) return;
         if (vertexConsumer == null) {
             vertexConsumer = bufferSource.getBuffer(renderType);
         }
         animatable.resetAnimationState();
         net.everla.ysmPhysLib.PlayerPhysics.render(model, animatable, partialTick, poseStack.last().pose());
-        ResourceLocation tex = animatable.getTextureLocation();
+        ResourceLocation tex = renderType.isOutline() ? null : animatable.getTextureLocation();
         NativeModelRenderer.renderMesh(vertexConsumer, poseStack.last(), model.getGeoModel(), model.getMatrixData(), model.getAbsPivotData(), i, 0, i2, i3, f2, f3, f4, f5, tex);
         setCurrentModelRenderCycle(EModelRenderCycle.REPEATED);
     }

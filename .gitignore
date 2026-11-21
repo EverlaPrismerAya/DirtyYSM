@@ -111,10 +111,10 @@ tools/
 
 # Local runtime, model caches and optional dependency downloads
 /config/
-/libs/
 *.log
 .env
 .env.*
 /scripts/
 /docs/
 /common/logs/
+/tests/

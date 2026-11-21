@@ -8,11 +8,18 @@
     "defaultRequire": 0
   },
   "client": [
+    "client.esotericspell.RisingRingYsmCompatMixin",
+    "client.esotericspell.RisingRingRendererMixin",
+    "client.goety.BodyHaloRendererMixin",
+    "client.goety.DomainOfFadeRendererMixin",
+    "client.goety.GlowRenderLayerMixin",
     "client.goety.AccessoryLayerMixin",
     "client.goety.WearRendererMixin",
     "client.goety.ShowMeYourHaloMixin",
     "client.goety.ShowMeYourRevelationHaloMixin",
     "client.goety.ShowMeYourHaloHeadMixin",
+    "client.goety.StarFantasyHaloRendererMixin",
+    "client.goety.StarFantasyHaloEventsMixin",
     "client.create.PlayerSkyhookRendererAccessor",
     "client.parcool.AnimationAccessor",
     "client.parcool.DodgeAnimatorAccessor",

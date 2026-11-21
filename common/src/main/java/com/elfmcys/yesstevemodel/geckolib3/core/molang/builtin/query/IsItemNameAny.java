@@ -27,6 +27,7 @@ public class IsItemNameAny extends LivingEntityFunction {
                 if (location == null) {
                     return null;
                 }
+                net.everla.reimaginedysm.compat.ModelAccessoryOverrides.recordHeadQuery(context.entity(), slotType, location, false);
                 if (location.equals(key)) {
                     return true;
                 }

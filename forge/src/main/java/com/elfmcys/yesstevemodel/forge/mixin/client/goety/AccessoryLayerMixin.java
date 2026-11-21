@@ -17,7 +17,8 @@ public abstract class AccessoryLayerMixin {
                     new net.everla.reimaginedysm.compat.youkai.YoukaiHeadLayer());
         }
         if (ModList.get().isLoaded("curios") && (ModList.get().isLoaded("goety")
-                || ModList.get().isLoaded("goety_revelation"))) {
+                || ModList.get().isLoaded("goety_revelation") || ModList.get().isLoaded("starfantasy_goety")
+                || ModList.get().isLoaded("esoteric_spell") || ModList.get().isLoaded("fantasy_ending"))) {
             ((CustomPlayerRenderer) (Object) this).addLayerRenderer(new GoetyAccessoryLayer());
         }
     }

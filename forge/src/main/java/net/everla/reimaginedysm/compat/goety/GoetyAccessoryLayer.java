@@ -1,9 +1,7 @@
 package net.everla.reimaginedysm.compat.goety;
 
 import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
-import com.elfmcys.yesstevemodel.client.model.ModelAssembly;
-import com.elfmcys.yesstevemodel.geckolib3.core.molang.value.IValue;
-import com.elfmcys.yesstevemodel.geckolib3.core.molang.value.MolangValue;
+import net.everla.reimaginedysm.compat.ModelAccessoryOverrides;
 import com.elfmcys.yesstevemodel.geckolib3.geo.GeoLayerRenderer;
 import com.elfmcys.yesstevemodel.geckolib3.util.RenderUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -29,7 +27,9 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.SlotResult;
 import top.theillusivec4.curios.api.client.CuriosRendererRegistry;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -38,7 +38,11 @@ import java.util.*;
 public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEntity> {
     private static final Set<UUID> RENDERED = new HashSet<>();
     private static boolean rendering;
-    private final Map<ModelAssembly, Set<String>> overrides = new WeakHashMap<>();
+    private static final TagKey<net.minecraft.world.item.Item> FANTASY_HALOS = TagKey.create(
+            Registries.ITEM, new ResourceLocation("starfantasy_goety", "halo_of_apostle"));
+    private static final ResourceLocation HADES_HALO = new ResourceLocation("starfantasy_goety", "halo_of_hades");
+    private static final ResourceLocation ESOTERIC_HALO = new ResourceLocation("esoteric_spell", "rising_inolia_ring");
+    private static final ResourceLocation FANTASY_ENDING_HALO = new ResourceLocation("fantasy_ending", "the_domain_of_fade");
     private final ModelPart halo;
     private final PlayerModel<AbstractClientPlayer> parentModel;
     private final RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent;
@@ -73,8 +77,8 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
         var model = entity.getCurrentModel();
         if (model == null) return;
         RENDERED.add(player.getUUID());
-        var references = overrides.computeIfAbsent(entity.getModelAssembly(), GoetyAccessoryLayer::findOverrides);
         CuriosApi.getCuriosInventory(player).ifPresent(inventory -> {
+            var fantasyHalo = selectFantasyHalo(inventory);
             // Equipment owns priority even when hidden or rendered by the model itself.
             int highestHalo = 0;
             for (var handler : inventory.getCurios().values()) {
@@ -90,38 +94,60 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
                 boolean cosmetic = !stack.isEmpty();
                 boolean visible = i < handler.getRenders().size() && handler.getRenders().get(i);
                 if (!cosmetic && visible) stack = handler.getStacks().getStackInSlot(i);
-                if (stack.isEmpty() || handledByModel(references, stack)
-                        || handledByModel(entity.getCurioRenderQueries(), stack)) continue;
+                if (stack.isEmpty()) continue;
                 var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                if (!isSupported(id)) continue;
+                boolean fantasy = isFantasyHalo(stack);
+                if (!isSupported(stack)) continue;
+                if (fantasy && (fantasyHalo == null
+                        || !fantasyHalo.slotContext().identifier().equals(slot)
+                        || fantasyHalo.slotContext().index() != i
+                        || isHadesHalo(fantasyHalo.stack()) && !isHadesHalo(stack))) continue;
                 int priority = haloPriority(id);
                 if (priority > 0 && priority < equippedHalo) continue;
-                boolean bodyHalo = id.getPath().equals("halo_of_the_end");
-                var locator = bodyHalo ? model.odamaneHaloBones() : model.haloBones();
-                if (locator.isEmpty() && !bodyHalo && model.headBones().isEmpty()) continue;
-                poses.pushPose();
-                try {
-                    if (!locator.isEmpty()) {
-                        if (RenderUtils.prepMatrixForLocator(poses, locator)) continue;
-                        var tip = locator.get(locator.size() - 1);
-                        if (tip.getScaleX() == 0 || tip.getScaleY() == 0 || tip.getScaleZ() == 0) continue;
-                    } else if (bodyHalo) {
-                        if (prepareBody(poses, model)) continue;
-                        // GR renders relative to vanilla's head origin, 24 model pixels above the feet.
-                        // Apply this in body space, before converting YSM's axes to vanilla model axes.
-                        poses.translate(0, 24.0 / 16.0 + 0.3, 0);
-                    } else if (RenderUtils.prepMatrixForLocator(poses, model.headBones())) continue;
-                    poses.scale(-1, -1, 1);
-                    rendering = id.getPath().equals("halo_of_the_end");
-                    renderAccessory(stack, id, new SlotContext(slot, player, i, cosmetic, visible), poses,
-                            buffers, light, partialTick, age);
-                } finally {
-                    rendering = false;
-                    poses.popPose();
-                }
+                renderLocatedAccessory(stack, new SlotContext(slot, player, i, cosmetic, visible),
+                        poses, buffers, light, entity, partialTick, age);
             }
             });
         });
+        if (net.minecraftforge.fml.ModList.get().isLoaded("esoteric_spell")) {
+            EsotericRenderer.hiddenRing(player).ifPresent(stack -> renderLocatedAccessory(stack,
+                    new SlotContext("hidden_rising_ring", player, 0, false, true),
+                    poses, buffers, light, entity, partialTick, age));
+        }
+    }
+
+    private void renderLocatedAccessory(ItemStack stack, SlotContext slot, PoseStack poses,
+                                        MultiBufferSource buffers, int light, CustomPlayerEntity entity,
+                                        float partialTick, float age) {
+        if (stack.isEmpty() || ModelAccessoryOverrides.handles(entity, stack)) return;
+        var model = entity.getCurrentModel();
+        var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        boolean fantasy = isFantasyHalo(stack);
+        boolean bodyHalo = isBodyHalo(id);
+        var locator = ESOTERIC_HALO.equals(id) ? model.esotericHaloBones()
+                : FANTASY_ENDING_HALO.equals(id) ? model.fantasyEndingHaloBones()
+                : fantasy ? model.fantasyHaloBones()
+                : bodyHalo ? model.odamaneHaloBones() : model.haloBones();
+        if (locator.isEmpty() && !bodyHalo && model.headBones().isEmpty()) return;
+        poses.pushPose();
+        try {
+            if (!locator.isEmpty()) {
+                if (RenderUtils.prepMatrixForLocator(poses, locator)) return;
+                var tip = locator.get(locator.size() - 1);
+                if (tip.getScaleX() == 0 || tip.getScaleY() == 0 || tip.getScaleZ() == 0) return;
+            } else if (bodyHalo) {
+                if (prepareBody(poses, model)) return;
+                // Restore each native renderer's vanilla model origin in body space.
+                poses.translate(0, id.getPath().equals("halo_of_the_end") ? 24.0 / 16.0 + 0.3 : 1.501, 0);
+            } else if (RenderUtils.prepMatrixForLocator(poses, model.headBones())) return;
+            poses.scale(-1, -1, 1);
+            rendering = bodyHalo || fantasy;
+            renderAccessory(stack, id, slot, poses,
+                    buffers, light, partialTick, age);
+        } finally {
+            rendering = false;
+            poses.popPose();
+        }
     }
 
     private static boolean prepareBody(PoseStack poses,
@@ -157,20 +183,44 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
         };
     }
 
+    // Equipment determines the winner before visibility, cosmetics or model overrides are applied.
+    private static SlotResult selectFantasyHalo(ICuriosItemHandler inventory) {
+        SlotResult first = null;
+        for (var entry : inventory.getCurios().entrySet()) {
+            var stacks = entry.getValue().getStacks();
+            for (int i = 0; i < stacks.getSlots(); i++) {
+                ItemStack stack = stacks.getStackInSlot(i);
+                if (!isFantasyHalo(stack)) continue;
+                var result = new SlotResult(new SlotContext(entry.getKey(), inventory.getWearer(), i, false, true), stack);
+                if (isHadesHalo(stack)) return result;
+                if (first == null) first = result;
+            }
+        }
+        return first;
+    }
+
+    private static boolean isHadesHalo(ItemStack stack) {
+        return HADES_HALO.equals(BuiltInRegistries.ITEM.getKey(stack.getItem()));
+    }
+
+    public static boolean isFantasyHalo(ItemStack stack) {
+        return !stack.isEmpty() && (stack.is(FANTASY_HALOS) || isHadesHalo(stack));
+    }
+
+    public static boolean isSupported(ItemStack stack) {
+        return isSupported(BuiltInRegistries.ITEM.getKey(stack.getItem())) || isFantasyHalo(stack);
+    }
+
     public static boolean isSupported(ResourceLocation id) {
-        return id.getNamespace().equals("goety") && Set.of("unholy_hat", "unholy_hat_halo").contains(id.getPath())
+        return ESOTERIC_HALO.equals(id) || FANTASY_ENDING_HALO.equals(id)
+                || id.getNamespace().equals("goety") && Set.of("unholy_hat", "unholy_hat_halo").contains(id.getPath())
                 || id.getNamespace().equals("goety_revelation")
                 && Set.of("ascension_halo", "broken_halo", "halo_of_the_end").contains(id.getPath());
     }
 
-    private static boolean handledByModel(Set<String> references, ItemStack stack) {
-        String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-        if (references.contains(id)) return true;
-        for (String reference : references) {
-            if (reference.startsWith("#") && stack.is(TagKey.create(Registries.ITEM,
-                    new ResourceLocation(reference.substring(1))))) return true;
-        }
-        return false;
+    private static boolean isBodyHalo(ResourceLocation id) {
+        return ESOTERIC_HALO.equals(id) || FANTASY_ENDING_HALO.equals(id)
+                || id.getNamespace().equals("goety_revelation") && id.getPath().equals("halo_of_the_end");
     }
 
     private void renderAccessory(ItemStack stack, ResourceLocation id, SlotContext slot, PoseStack poses,
@@ -179,14 +229,36 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
             CuriosRendererRegistry.getRenderer(stack.getItem()).ifPresent(renderer -> {
                 if (renderer instanceof HeadWearRenderer wear) wear.ysm$renderHead(slot.entity(), stack, poses, buffers, light, age);
             });
-        } else if (id.getPath().equals("halo_of_the_end")) {
-            // Keep RevelationFix's native animation, shader and health-dependent effects.
+        } else if (ESOTERIC_HALO.equals(id)) {
+            EsotericRenderer.render(slot.entity(), poses, buffers, light, partialTick);
+        } else if (isBodyHalo(id) || isFantasyHalo(stack)) {
+            // Keep the installed mod's native animation, shaders and item-dependent effects.
             parentModel.head.resetPose();
             parentModel.young = false;
-            CuriosRendererRegistry.getRenderer(stack.getItem()).ifPresent(renderer -> renderer.render(stack, slot,
-                    poses, parent, buffers, light, 0, 0, partialTick, age, 0, 0));
+            CuriosRendererRegistry.getRenderer(stack.getItem()).ifPresent(renderer -> {
+                try (var state = FANTASY_ENDING_HALO.equals(id) ? new FantasyEndingHaloRenderState() : null) {
+                    renderer.render(stack, slot, poses, parent, buffers, light, 0, 0, partialTick, age, 0, 0);
+                }
+            });
         } else {
             renderRevelationHalo(slot.entity(), id.getPath().equals("broken_halo"), poses, buffers, light);
+        }
+    }
+
+    // Load the optional mod's API only when its item is actually rendered.
+    private static final class EsotericRenderer {
+        static Optional<ItemStack> hiddenRing(net.minecraft.world.entity.LivingEntity entity) {
+            if (com.inolia_zaicek.barrier_spell.item.RisingInoliaRingHelper.findCurioRing(entity).isPresent()) {
+                return Optional.empty();
+            }
+            return com.inolia_zaicek.barrier_spell.item.RisingInoliaRingHelper.getHiddenRing(entity)
+                    .filter(stack -> ESOTERIC_HALO.equals(BuiltInRegistries.ITEM.getKey(stack.getItem())));
+        }
+
+        static void render(net.minecraft.world.entity.LivingEntity entity, PoseStack poses,
+                           MultiBufferSource buffers, int light, float partialTick) {
+            com.inolia_zaicek.barrier_spell.client.ring.RisingRingCurioRenderer.renderDirect(
+                    entity, poses, buffers, light, partialTick);
         }
     }
 
@@ -219,24 +291,4 @@ public final class GoetyAccessoryLayer extends GeoLayerRenderer<CustomPlayerEnti
                 "textures/entity/player/" + texture + ".png"), 1, 1)), light, OverlayTexture.NO_OVERLAY);
     }
 
-    private static void collect(Set<String> references, IValue value) {
-        if (value instanceof MolangValue molang) references.addAll(molang.getCurioRenderReferences());
-    }
-
-    private static Set<String> findOverrides(ModelAssembly assembly) {
-        Set<String> references = new HashSet<>();
-        assembly.getAnimationBundle().getMainAnimations().values().forEach(animation -> {
-            if (!animation.isFromPrimaryAssembly) references.addAll(animation.curioRenderReferences);
-        });
-        assembly.getAnimationBundle().getAnimationEntries().values().forEach(controller ->
-                controller.getStates().values().forEach(state -> {
-                    state.getAnimations().forEach(pair -> collect(references, pair.getValue()));
-                    state.getTransitions().forEach(pair -> collect(references, pair.value()));
-                    state.getPreExpressions().forEach(value -> collect(references, value));
-                    state.getPostExpressions().forEach(value -> collect(references, value));
-                }));
-        assembly.getExpressionCache().getFunctions().values().forEach(value -> collect(references, value));
-        assembly.getExpressionCache().getEvents().values().forEach(values -> values.forEach(value -> collect(references, value)));
-        return Set.copyOf(references);
-    }
 }

@@ -16,7 +16,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ItemStack;
+import net.everla.reimaginedysm.compat.ModelAccessoryOverrides;
+import net.everla.reimaginedysm.compat.cosmeticarmorreworked.CosmeticArmorHelper;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.fml.ModList;
+
+import java.util.function.Consumer;
 
 /** Uses Youkai's Homecoming's own Forge armor models and textures. */
 public final class YoukaiHeadLayer extends GeoLayerRenderer<CustomPlayerEntity> {
@@ -27,10 +33,20 @@ public final class YoukaiHeadLayer extends GeoLayerRenderer<CustomPlayerEntity> 
     public void render(PoseStack poses, MultiBufferSource buffers, int light, CustomPlayerEntity entity,
                        float limbSwing, float limbAmount, float partialTick, float age, float yaw, float pitch) {
         var player = entity.getEntity();
-        var stack = player.getItemBySlot(EquipmentSlot.HEAD);
-        if (player.isInvisible() || !(stack.getItem() instanceof ArmorItem armor)
+        if (player.isInvisible() || player.isSpectator() || entity.getCurrentModel() == null) return;
+        renderHeadwear(poses, buffers, light, entity, CosmeticArmorHelper.getArmorItem(player, EquipmentSlot.HEAD));
+        if (ModList.get().isLoaded("curios")) {
+            CuriosHeadwear.forEachVisible(player, stack -> renderHeadwear(poses, buffers, light, entity, stack));
+        }
+    }
+
+    private void renderHeadwear(PoseStack poses, MultiBufferSource buffers, int light,
+                               CustomPlayerEntity entity, ItemStack stack) {
+        var player = entity.getEntity();
+        if (!(stack.getItem() instanceof ArmorItem armor)
                 || armor.getEquipmentSlot() != EquipmentSlot.HEAD
-                || !BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("youkaishomecoming")) return;
+                || !BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("youkaishomecoming")
+                || ModelAccessoryOverrides.handles(entity, stack)) return;
         var geoModel = entity.getCurrentModel();
         if (geoModel == null) return;
         var locator = geoModel.youkaiHeadBones().isEmpty() ? geoModel.headBones() : geoModel.youkaiHeadBones();
@@ -45,6 +61,8 @@ public final class YoukaiHeadLayer extends GeoLayerRenderer<CustomPlayerEntity> 
         poses.pushPose();
         try {
             if (RenderUtils.prepMatrixForLocator(poses, locator)) return;
+            var tip = locator.get(locator.size() - 1);
+            if (tip.getScaleX() == 0 || tip.getScaleY() == 0 || tip.getScaleZ() == 0) return;
             poses.scale(-1, -1, 1);
             var consumer = ItemRenderer.getArmorFoilBuffer(buffers,
                     RenderType.armorCutoutNoCull(new ResourceLocation(texture)), false, stack.hasFoil());
@@ -52,6 +70,22 @@ public final class YoukaiHeadLayer extends GeoLayerRenderer<CustomPlayerEntity> 
             model.hat.render(poses, consumer, light, OverlayTexture.NO_OVERLAY);
         } finally {
             poses.popPose();
+        }
+    }
+
+    // Keep optional Curios classes out of the armor-only loading path.
+    private static final class CuriosHeadwear {
+        static void forEachVisible(LivingEntity player, Consumer<ItemStack> render) {
+            top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(player).ifPresent(inventory -> {
+                for (var handler : inventory.getCurios().values()) {
+                    for (int i = 0; i < handler.getStacks().getSlots(); i++) {
+                        if (i >= handler.getRenders().size() || !handler.getRenders().get(i)) continue;
+                        ItemStack stack = handler.hasCosmetic() ? handler.getCosmeticStacks().getStackInSlot(i) : ItemStack.EMPTY;
+                        if (stack.isEmpty()) stack = handler.getStacks().getStackInSlot(i);
+                        if (!stack.isEmpty()) render.accept(stack);
+                    }
+                }
+            });
         }
     }
 }
