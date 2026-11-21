@@ -2,6 +2,7 @@ package com.elfmcys.yesstevemodel.geckolib3.resource;
 
 import com.elfmcys.yesstevemodel.client.animation.molang.TLMBinding;
 import com.elfmcys.yesstevemodel.client.animation.molang.YSMBinding;
+import com.elfmcys.yesstevemodel.client.animation.molang.RYSMBinding;
 import com.elfmcys.yesstevemodel.client.animation.molang.ArgsVariable;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.MolangParser;
 import com.elfmcys.yesstevemodel.geckolib3.core.molang.builtin.MathBinding;
@@ -53,6 +54,7 @@ public class GeckoLibCache {
         if (EXTRA_BINDING.isEmpty()) {
             try {
                 EXTRA_BINDING.put("ysm", YSMBinding.INSTANCE.get());
+                EXTRA_BINDING.put("rysm", new RYSMBinding());
                 EXTRA_BINDING.put("ctrl", CtrlBinding.INSTANCE.get());
                 EXTRA_BINDING.put("tlm", TLMBinding.INSTANCE.get());
                 EXTRA_BINDING.put("args", ArgsVariable.INSTANCE);
