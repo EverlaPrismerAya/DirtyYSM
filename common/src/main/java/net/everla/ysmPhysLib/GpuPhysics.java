@@ -35,7 +35,8 @@ public final class GpuPhysics {
         float[] parameters=owner.getMatrixData();
         if(!PhysConfig.gpuEnabled()) {lastReason="experimental GPU physics disabled";deactivate(parameters);return false;}
         String reason=null;
-        if(!textured || ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()
+        if(net.everla.reimaginedysm.compat.firstperson.FirstPersonCompat.isFirstPersonActive()) reason="FirstPerson body uses CPU rendering and physics";
+        else if(!textured || ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()
                 || !ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) reason="GPU renderer required";
         else if(OptiFineDetector.isOptifinePresent()) reason="OptiFine is unsupported";
         else if(shaderFailure!=null) reason=shaderFailure;

@@ -39,8 +39,11 @@ public final class GpuPhysCheck {
                 else assert !fixture.ysmPhysics.cubes.isEmpty() : "unexpected CPU fallback";
             }
             GeoModel demo=loadModel(System.getProperty("ysm.physicsExample"));
+            sharedNativeMesh(demo);
+            if(System.getProperty("ysm.physicsModel")!=null) sharedNativeMesh(loadModel(System.getProperty("ysm.physicsModel")));
             for(int fps:new int[]{1,15,30,60,120}) for(int scenario=2;scenario<=4;scenario++) parity(demo,fps,scenario);
             irisMatrices();
+            queuedPhysicsMatrices();
             if(Boolean.getBoolean("ysm.gpuContactPrototype")) {
                 for(int scenario=2;scenario<5;scenario++) parity(fixture(scenario),120,scenario,true);
                 parity(demo,120,4,true);parity(demo,120,2,true);
@@ -55,6 +58,113 @@ public final class GpuPhysCheck {
             if(window!=0) {GpuPhysKernel.shutdown();GLFW.glfwDestroyWindow(window);}
             GLFW.glfwTerminate();GLFW.glfwSetErrorCallback(null);callback.free();
         }
+    }
+    /** A world entity and HUD player reuse one mesh, but supply different poses and roots. */
+    private static void sharedNativeMesh(GeoModel geometry) throws Exception {
+        if(geometry.ysmPhysics==null) geometry.ysmPhysics=definition(geometry);
+        com.elfmcys.yesstevemodel.NativeLibLoader.init();
+        assert com.elfmcys.yesstevemodel.NativeLibLoader.isLoaded() : "native renderer unavailable";
+        var mesh=net.everla.reimaginedysm.gpu.GpuRenderPath.getOrBuildMesh(geometry);
+        assert mesh!=null;
+        var first=parameters(geometry);var second=parameters(geometry);
+        var firstPose=mesh.pose(first);var secondPose=mesh.pose(second);
+        assert firstPose==mesh.pose(first) && firstPose!=secondPose : "pose ownership is not instance-specific";
+        assert firstPose.boneSsbo!=secondPose.boneSsbo && firstPose.boneBuffer!=secondPose.boneBuffer : "instances share mutable bone data";
+        firstPose.ensureXformBuffers(mesh);secondPose.ensureXformBuffers(mesh);
+        assert firstPose.xformVbo()!=secondPose.xformVbo() && firstPose.xformVao()!=secondPose.xformVao() : "Iris instances share transformed vertices";
+        var worldRoot=new Matrix4f().translate(2,3,-4).rotateXYZ(.2f,.7f,-.1f);
+        var hudRoot=new Matrix4f().translate(20,40,1000).scale(35,-35,35);
+        float[] poseScratch=new float[16],normalScratch=new float[9];
+        var visibility=net.everla.reimaginedysm.gpu.GpuRenderPath.class.getDeclaredMethod("updateBoneVisibility",List.class,float[].class,ByteBuffer.class);
+        visibility.setAccessible(true);
+        int shader=ShaderUtil.compileShaderFromResource(GL20.GL_VERTEX_SHADER,"/bone_skin.vsh");
+        int program=ShaderUtil.linkProgramWith(p->GL30.glTransformFeedbackVaryings(p,new CharSequence[]{"gl_Position"},GL30.GL_INTERLEAVED_ATTRIBS),shader);
+        int feedback=GL15.glGenBuffers();
+        var vertices=read(mesh.vbo,mesh.vertexCount*32);
+        int draws=30*4,bytesPerDraw=mesh.vertexCount*16;
+        var captured=MemoryUtil.memAlloc(bytesPerDraw*draws);
+        var expectedDraws=new ArrayList<Matrix4f[]>();
+        var drawnParameters=new ArrayList<float[]>();
+        try {
+            GL20.glUseProgram(program);
+            GL20.glUniformMatrix4fv(GL20.glGetUniformLocation(program,"u_proj"),false,new Matrix4f().get(new float[16]));
+            GL15.glBindBuffer(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,feedback);
+            GL15.glBufferData(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,(long)bytesPerDraw*draws,GL15.GL_STREAM_READ);
+            GL30.glBindVertexArray(mesh.vao);
+            GL11.glEnable(GL30.GL_RASTERIZER_DISCARD);
+            for(int frame=0;frame<30;frame++) {
+                for(int bone=0;bone<geometry.bakedBones.size();bone++) {
+                    int at=bone*12;
+                    for(int axis=0;axis<3;axis++) {
+                        first[at+axis]=.15f*(float)Math.sin(frame*.13+bone*.7+axis);
+                        second[at+axis]=-.2f*(float)Math.cos(frame*.19+bone*.3+axis);
+                        first[at+3+axis]=.4f*(float)Math.sin(frame*.1+bone+axis);
+                        second[at+3+axis]=-.3f*(float)Math.cos(frame*.2+bone+axis);
+                    }
+                }
+                second[3]=12;
+                // Alternate the FirstPerson AllHead override when the fixture has one.
+                int hiddenBone=0;
+                for(int bone=0;bone<geometry.topLevelBones().size();bone++)
+                    if(geometry.topLevelBones().get(bone).getName().equals("AllHead")) {hiddenBone=bone;break;}
+                first[hiddenBone*12+9]=first[hiddenBone*12+10]=frame%2;
+                // Queue alternating instances and repeated passes without readbacks/waits.
+                for(int draw=0;draw<4;draw++) {
+                    var p=draw==1?second:first;
+                    var instance=mesh.pose(p);
+                    instance.boneBuffer.clear();
+                    var root=draw==1?hudRoot:worldRoot;
+                    var before=p.clone();
+                    GeoModel.nComputeBoneMatrices(mesh.pointer,root.get(poseScratch),root.normal(new org.joml.Matrix3f()).get(normalScratch),
+                            p,1234,instance.boneBuffer);
+                    visibility.invoke(null,geometry.bakedBones,p,instance.boneBuffer);
+                    var expected=matrices(geometry.ysmPhysics,p,root);
+                    for(int bone=0;bone<expected.length;bone++) {
+                        var actual=new Matrix4f(instance.boneBuffer.asFloatBuffer().position(bone*36));
+                        assert actual.equals(expected[bone],.002f) : "shared native mesh retained another instance's transform";
+                    }
+                    assert Arrays.equals(before,p) : "native draw changed instance animation";
+                    instance.uploadBones();
+                    GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,0,instance.boneSsbo);
+                    GL30.glBindBufferRange(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,0,feedback,(long)(frame*4+draw)*bytesPerDraw,bytesPerDraw);
+                    GL30.glBeginTransformFeedback(GL11.GL_POINTS);
+                    GL11.glDrawArrays(GL11.GL_POINTS,0,mesh.vertexCount);
+                    GL30.glEndTransformFeedback();
+                    expectedDraws.add(expected);drawnParameters.add(before);
+                }
+            }
+            // One read only after every draw has been submitted. Per-draw readbacks
+            // serialize the GPU and conceal in-flight buffer reuse regressions.
+            GL15.glBindBuffer(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,feedback);
+            GL15.glGetBufferSubData(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,0,captured);
+            for(int draw=0;draw<draws;draw++) {
+                var expected=expectedDraws.get(draw);var p=drawnParameters.get(draw);
+                for(int vertex=0;vertex<mesh.vertexCount;vertex++) {
+                        int at=vertex*32,bone=Short.toUnsignedInt(vertices.getShort(at+24));
+                        assert bone<expected.length : "invalid packed bone index";
+                        boolean hidden=p[bone*12+9]!=0;
+                        for(int ancestor=bone;ancestor>=0;ancestor=geometry.bakedBones.get(ancestor).parentIdx)
+                            hidden |= p[ancestor*12+6]==0 || p[ancestor*12+7]==0 || p[ancestor*12+8]==0
+                                    || (ancestor!=bone && p[ancestor*12+10]!=0);
+                        var wanted=hidden?new org.joml.Vector4f(2,2,2,1):expected[bone].transform(new org.joml.Vector4f(
+                                vertices.getFloat(at),vertices.getFloat(at+4),vertices.getFloat(at+8),1));
+                        var actual=new org.joml.Vector4f(captured.asFloatBuffer().position(draw*mesh.vertexCount*4+vertex*4));
+                        assert actual.equals(wanted,.003f) : "shared mesh vertex visibility/pose mismatch: draw="+draw+" vertex="+vertex+" bone="+bone+" actual="+actual+" expected="+wanted;
+                }
+            }
+            var cleanup=mesh.getClass().getDeclaredMethod("cleanupPoses",boolean.class);cleanup.setAccessible(true);
+            assert GL15.glIsBuffer(firstPose.boneSsbo) && GL15.glIsBuffer(secondPose.boneSsbo);
+            cleanup.invoke(mesh,true);
+            assert !GL15.glIsBuffer(firstPose.boneSsbo) && !GL15.glIsBuffer(secondPose.boneSsbo) : "pose SSBO leaked on unload";
+            assert !GL15.glIsBuffer(firstPose.xformVbo()) && !GL15.glIsBuffer(secondPose.xformVbo()) : "Iris pose VBO leaked on unload";
+        } finally {
+            GL11.glDisable(GL30.GL_RASTERIZER_DISCARD);GL30.glBindVertexArray(0);GL20.glUseProgram(0);
+            GL30.glBindBufferBase(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,0,0);
+            GL15.glDeleteBuffers(feedback);GL20.glDeleteProgram(program);
+            MemoryUtil.memFree(vertices);MemoryUtil.memFree(captured);
+            net.everla.reimaginedysm.gpu.GpuRenderPath.disposeMesh(geometry);
+        }
+        System.out.println("PASS: 120 queued production skin draws, "+geometry.bakedBones.size()+" bones / "+mesh.vertexCount+" vertices, isolated SSBO/Iris outputs, poses, visibility and unload cleanup");
     }
     private static void hybrid() {
         var geometry=model(bone("ysmPhys#bc=true,s=0,r=3,air=0,a=180@cpu",-1,0,0,0),
@@ -292,6 +402,54 @@ public final class GpuPhysCheck {
             GL15.glDeleteBuffers(input);GL15.glDeleteBuffers(output);GL20.glDeleteProgram(shader);
         }
         System.out.println("PASS: Iris local physics SSBO, actual vertex-transform shader and root applied once");
+    }
+
+    /** GPU physics outputs are also reused by main/shadow draws without CPU waits. */
+    private static void queuedPhysicsMatrices() {
+        var geometry=fixture(1);var d=geometry.ysmPhysics;
+        int draws=120,bytesPerDraw=d.bones.size()*16;
+        int program=ShaderUtil.linkProgramWith(p->GL30.glTransformFeedbackVaryings(p,new CharSequence[]{"gl_Position"},GL30.GL_INTERLEAVED_ATTRIBS),
+                ShaderUtil.compileShader(GL20.GL_VERTEX_SHADER,"""
+                    #version 430 core
+                    struct Bone {mat4 transform;mat4 normal;ivec4 flags;};
+                    layout(std430,binding=0) readonly buffer Bones {Bone bones[];};
+                    void main(){gl_Position=bones[gl_VertexID].transform*vec4(.2,.3,.1,1);}
+                    ""","queued physics consumer"));
+        int vao=GL30.glGenVertexArrays(),feedback=GL15.glGenBuffers();
+        var captured=MemoryUtil.memAlloc(draws*bytesPerDraw);
+        var expected=new ArrayList<Matrix4f[]>();
+        try(var topology=new GpuPhysModel(d,new boolean[d.bones.size()]);
+            var first=new GpuPhysKernel(topology,1);var second=new GpuPhysKernel(topology,1)) {
+            var parameters=parameters(geometry);
+            first.solve(parameters,new Matrix4f(),new Matrix4f(),List.of(),0,true,1f/60,ZERO,1);
+            second.solve(parameters,new Matrix4f(),new Matrix4f(),List.of(),0,true,1f/60,ZERO,1);
+            GL30.glBindVertexArray(vao);GL11.glEnable(GL30.GL_RASTERIZER_DISCARD);
+            GL15.glBindBuffer(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,feedback);
+            GL15.glBufferData(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,(long)draws*bytesPerDraw,GL15.GL_STREAM_READ);
+            for(int draw=0;draw<draws;draw++) {
+                var kernel=draw%3==0?second:first;
+                for(int bone=0;bone<d.bones.size();bone++) parameters[bone*12+2]=.3f*(float)Math.sin(draw*.17+bone);
+                var root=new Matrix4f().translate(draw*.1f,draw%3,-2).rotateY(draw*.03f);
+                expected.add(matrices(d,parameters,root));
+                kernel.matrices(parameters,root,1);
+                GL20.glUseProgram(program);GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,0,kernel.output);
+                GL30.glBindBufferRange(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,0,feedback,(long)draw*bytesPerDraw,bytesPerDraw);
+                GL30.glBeginTransformFeedback(GL11.GL_POINTS);GL11.glDrawArrays(GL11.GL_POINTS,0,d.bones.size());GL30.glEndTransformFeedback();
+            }
+            GL15.glBindBuffer(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,feedback);
+            GL15.glGetBufferSubData(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,0,captured);
+            for(int draw=0;draw<draws;draw++) for(int bone=0;bone<d.bones.size();bone++) {
+                var wanted=expected.get(draw)[bone].transform(new org.joml.Vector4f(.2f,.3f,.1f,1));
+                var actual=new org.joml.Vector4f(captured.asFloatBuffer().position((draw*d.bones.size()+bone)*4));
+                assert actual.equals(wanted,.001f) : "queued physics output was overwritten draw="+draw+" bone="+bone;
+            }
+            assert GL11.glGetError()==GL11.GL_NO_ERROR;
+        } finally {
+            GL11.glDisable(GL30.GL_RASTERIZER_DISCARD);GL30.glBindVertexArray(0);GL20.glUseProgram(0);
+            GL30.glBindBufferBase(GL30.GL_TRANSFORM_FEEDBACK_BUFFER,0,0);
+            GL15.glDeleteBuffers(feedback);GL30.glDeleteVertexArrays(vao);GL20.glDeleteProgram(program);MemoryUtil.memFree(captured);
+        }
+        System.out.println("PASS: 120 queued GPU physics matrix/consumer draws, two instances and repeated passes, no intermediate readbacks");
     }
 
     private static void benchmark(GeoModel geometry,int count) throws Exception {

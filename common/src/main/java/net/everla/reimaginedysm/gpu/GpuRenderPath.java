@@ -63,7 +63,8 @@ public final class GpuRenderPath {
         projMat.mul(mvMat, projMVScratch);
         projMVScratch.get(projScratch);
 
-        ByteBuffer boneBuf = mesh.perFrameBoneBuffer;
+        GpuPose instance = mesh.pose(boneParams);
+        ByteBuffer boneBuf = instance.boneBuffer;
         boneBuf.clear();
 
         updatePivotAbsStateBuffer(model, boneParams, stateBuffer);
@@ -96,9 +97,9 @@ public final class GpuRenderPath {
         GlStateManager._activeTexture(GL13.GL_TEXTURE0);
         GlStateManager._bindTexture(modelTexId);
 
-        int drawBones=physicsBuffer==0?mesh.boneSsbo:physicsBuffer;
+        int drawBones=physicsBuffer==0?instance.boneSsbo:physicsBuffer;
         GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, drawBones);
-        if(physicsBuffer==0) GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0L, boneBuf);
+        if(physicsBuffer==0) instance.uploadBones();
         GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, BoneSkinShader.ssbo, drawBones);
 
         float fogStart = RenderSystem.getShaderFogStart();
@@ -177,6 +178,18 @@ public final class GpuRenderPath {
         GpuMesh mesh = meshMap.remove(model.gpuMeshHandle);
         if (mesh != null) mesh.dispose();
         model.gpuMeshHandle = 0;
+    }
+
+    public static void tick() {
+        if (meshMap.isEmpty()) return;
+        RenderSystem.assertOnRenderThread();
+        boolean clear = Minecraft.getInstance().level == null;
+        for (GpuMesh mesh : meshMap.values()) mesh.cleanupPoses(clear);
+    }
+
+    public static void shutdown() {
+        for (GpuMesh mesh : meshMap.values()) mesh.dispose();
+        meshMap.clear();
     }
 
     public static GpuMesh getOrBuildMesh(GeoModel model) {

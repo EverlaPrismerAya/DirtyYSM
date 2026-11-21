@@ -80,7 +80,8 @@ public class ExtraPlayerConfigScreen extends OptionScreen {
         OptionGroup performance = new OptionGroup("performance")
                 .add(new net.everla.reimaginedysm.gui.components.ModelLoadingOptionRow())
                 .add(new BooleanOptionRow(0, 0, 0, 22, Option.ofBoolean("use_compatibility_renderer", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER))))
-                .add(new BooleanOptionRow(0, 0, 0, 22, Option.ofBoolean("use_gpu_renderer", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER))));
+                .add(new BooleanOptionRow(0, 0, 0, 22, Option.ofBoolean("use_gpu_renderer", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER))))
+                .add(new BooleanOptionRow(0, 0, 0, 22, Option.ofBoolean("use_gpu_renderer_globally", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER_GLOBALLY))));
 
         OptionGroup misc = new OptionGroup("misc")
                 .add(new BooleanOptionRow(0, 0, 0, 22, Option.ofBoolean("print_animation_roulette_msg", com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.PRINT_ANIMATION_ROULETTE_MSG))))

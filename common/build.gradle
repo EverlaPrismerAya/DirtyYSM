@@ -105,6 +105,15 @@ tasks.register('checkCurioRenderQueries', JavaExec) {
 
 tasks.named('check') { dependsOn 'checkCurioRenderQueries' }
 
+tasks.register('checkRenderContext', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath + sourceSets.main.compileClasspath
+    mainClass = 'com.elfmcys.yesstevemodel.geckolib3.geo.RenderContextCheck'
+    enableAssertions = true
+}
+
+tasks.named('check') { dependsOn 'checkRenderContext' }
+
 tasks.register('checkModelTransfer', JavaExec) {
     dependsOn testClasses
     classpath = sourceSets.test.runtimeClasspath + sourceSets.main.compileClasspath

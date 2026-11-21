@@ -46,10 +46,11 @@ public final class IrisRenderPath {
 
         GpuMesh mesh = GpuRenderPath.getOrBuildMesh(model);
         if (mesh == null) return false;
-        mesh.ensureXformBuffers();
+        GpuPose instance = mesh.pose(boneParams);
+        instance.ensureXformBuffers(mesh);
 
 
-        ByteBuffer boneBuf = mesh.perFrameBoneBuffer;
+        ByteBuffer boneBuf = instance.boneBuffer;
         boneBuf.clear();
         // Iris consumes model-local matrices; the entity shader applies pose once.
         int physicsBuffer=net.everla.ysmPhysLib.GpuPhysics.render(boneParams,new Matrix4f(),packedLight);
@@ -58,8 +59,7 @@ public final class IrisRenderPath {
             GeoModel.nComputeBoneMatricesLocal(mesh.pointer,cpuParams,packedLight,boneBuf);
             GpuRenderPath.updateBoneVisibility(model.bakedBones,cpuParams,boneBuf);
             boneBuf.position(0);boneBuf.limit(mesh.boneCount*144);
-            GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER,mesh.boneSsbo);
-            GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER,0L,boneBuf);
+            instance.uploadBones();
         }
 
         GlStateManager._glUseProgram(BoneXformCompute.program());
@@ -72,9 +72,11 @@ public final class IrisRenderPath {
         }
 
         GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 0, mesh.vbo);
-        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 1, mesh.xformVbo());
-        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 2, physicsBuffer==0?mesh.boneSsbo:physicsBuffer);
+        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 1, instance.xformVbo());
+        GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 2, physicsBuffer==0?instance.boneSsbo:physicsBuffer);
 
+        // Repeated shadow/main draws of this instance may still be consuming its output.
+        GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
         GL43.glDispatchCompute(BoneXformCompute.dispatchGroupCount(mesh.vertexCount), 1, 1);
 
         GL43.glMemoryBarrier(GL43.GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
@@ -91,7 +93,7 @@ public final class IrisRenderPath {
             if(shader.COLOR_MODULATOR!=null) shader.COLOR_MODULATOR.set(1.0f,1.0f,1.0f,1.0f);
             if(shader.GLINT_ALPHA!=null) shader.GLINT_ALPHA.set(1.0f);
             shader.apply();
-            GlStateManager._glBindVertexArray(mesh.xformVao());
+            GlStateManager._glBindVertexArray(instance.xformVao());
             int drawCount=mesh.indexDrawCount(renderPartMask);
             if(drawCount>0) GL11.glDrawElements(GL11.GL_TRIANGLES,drawCount,GL11.GL_UNSIGNED_INT,mesh.indexOffsetBytes(renderPartMask));
             checkError("draw");

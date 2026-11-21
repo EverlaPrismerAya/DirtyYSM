@@ -5,11 +5,10 @@ import com.elfmcys.yesstevemodel.client.renderer.ModelPreviewRenderer;
 import com.elfmcys.yesstevemodel.geckolib3.core.AnimatableEntity;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
-/** The only Minecraft/rendering adapter. No simulation runs for UI previews or nonplayers. */
+/** The Minecraft/rendering adapter for world entities. UI previews never simulate. */
 public final class PlayerPhysics {
     private PlayerPhysics() {}
 
@@ -19,11 +18,12 @@ public final class PlayerPhysics {
 
     public static void render(AnimatedGeoModel model, AnimatableEntity<?> animatable, float partialTick, Matrix4f renderPose) {
         var mc=Minecraft.getInstance();
-        boolean eligible=WorldPhysicsContext.allows(animatable.entity instanceof Player,
+        boolean eligible=WorldPhysicsContext.allows(
                 animatable instanceof IPreviewAnimatable || ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer())
                 && mc.level!=null && animatable.entity.level()==mc.level;
         if(!eligible) {
-            GpuPhysics.deactivate(model.getMatrixData());
+            // Inventory/HUD icons can draw the same instance between world passes.
+            // Restore animation for that draw while retaining its world simulation.
             beforeAnimation(model);
             return;
         }
@@ -38,20 +38,20 @@ public final class PlayerPhysics {
         if(definition==null || definition.joints.isEmpty()) return;
         if(model.ysmPhysics==null) model.ysmPhysics=new PhysSimulation(definition);
         model.ysmPhysics.setFrameRate(fps);
-        Player player=(Player)animatable.entity;
-        double x=Mth.lerp(partialTick,player.xo,player.getX());
-        double y=Mth.lerp(partialTick,player.yo,player.getY());
-        double z=Mth.lerp(partialTick,player.zo,player.getZ());
+        var entity=animatable.entity;
+        double x=Mth.lerp(partialTick,entity.xo,entity.getX());
+        double y=Mth.lerp(partialTick,entity.yo,entity.getY());
+        double z=Mth.lerp(partialTick,entity.zo,entity.getZ());
         // World rendering pose includes camera rotation and camera-relative translation.
-        // Undo both, then rebase near the player to retain float precision far from spawn.
+        // Undo both, then rebase near the entity to retain float precision far from spawn.
         var camera=mc.gameRenderer.getMainCamera();
         var cameraPos=camera.getPosition();
         Matrix4f root=new Matrix4f().translation((float)(cameraPos.x-x),(float)(cameraPos.y-y),(float)(cameraPos.z-z))
                 .mul(WorldPhysicsContext.modelToWorld(renderPose));
-        if(GpuPhysics.prepare(model,root,(player.tickCount+partialTick)/20.0,mc.isPaused(),player.level(),x,y,z,fps,
-                animatable.getTextureLocation()!=null,bounds->player.level().getBlockCollisions(player,bounds))) return;
-        model.ysmPhysics.update(model.getMatrixData(),root,(player.tickCount+partialTick)/20.0,mc.isPaused(),
-                player.level(),x,y,z,bounds->player.level().getBlockCollisions(player,bounds));
+        if(GpuPhysics.prepare(model,root,(entity.tickCount+partialTick)/20.0,mc.isPaused(),entity.level(),x,y,z,fps,
+                animatable.getTextureLocation()!=null,bounds->entity.level().getBlockCollisions(entity,bounds))) return;
+        model.ysmPhysics.update(model.getMatrixData(),root,(entity.tickCount+partialTick)/20.0,mc.isPaused(),
+                entity.level(),x,y,z,bounds->entity.level().getBlockCollisions(entity,bounds));
     }
 
     public static float[] hideEndpoints(com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel model, float[] parameters) {

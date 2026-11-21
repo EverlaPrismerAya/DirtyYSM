@@ -1,9 +1,11 @@
 package com.elfmcys.yesstevemodel.geckolib3.geo;
 
 import com.elfmcys.yesstevemodel.capability.VehicleCapability;
+import com.elfmcys.yesstevemodel.client.entity.CustomPlayerEntity;
 import com.elfmcys.yesstevemodel.client.entity.LivingAnimatable;
 import com.elfmcys.yesstevemodel.client.renderer.ModelPreviewRenderer;
 import com.elfmcys.yesstevemodel.geckolib3.core.event.predicate.AnimationEvent;
+import com.elfmcys.yesstevemodel.geckolib3.core.processor.IBone;
 import com.elfmcys.yesstevemodel.geckolib3.core.util.Color;
 import com.elfmcys.yesstevemodel.geckolib3.extended.LivingEntityRendererAccessor;
 import com.elfmcys.yesstevemodel.geckolib3.geo.animated.AnimatedGeoModel;
@@ -34,6 +36,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import net.everla.reimaginedysm.api.client.RenderLivingBridge;
+import net.everla.reimaginedysm.compat.firstperson.FirstPersonCompat;
 
 import java.util.List;
 import java.util.Optional;
@@ -90,43 +93,55 @@ public abstract class GeoReplacedEntityRenderer<TEntity extends LivingEntity, T 
         AnimationEvent<?> event = t.processAnimation(partialTick);
         TEntity entity = t.getEntity();
         Minecraft minecraft = Minecraft.getInstance();
-        if (event != null && minecraft.player != null) {
-            EntityModelData modelData = event.getModelData();
-            // 使用 .set 来避免每次渲染创建新的 Matrix4f, 减少 allocation rate
-            this.dispatchedMat.set(poseStack.last().pose());
-            setCurrentModelRenderCycle(EModelRenderCycle.INITIAL);
-            poseStack.pushPose();
-            if (entity.getPose() == Pose.SLEEPING && (bedOrientation = entity.getBedOrientation()) != null) {
-                float eyeHeight = entity.getEyeHeight(Pose.STANDING) - 0.1f;
-                poseStack.translate((-bedOrientation.getStepX()) * eyeHeight, 0.0f, (-bedOrientation.getStepZ()) * eyeHeight);
+        // FirstPerson's flag describes this draw, not the asynchronously evaluated
+        // animation. Keep its head override out of the persistent animation pose.
+        IBone head = event != null && t instanceof CustomPlayerEntity player && player.isLocalPlayerModel()
+                && !NativeModelRenderer.isPreview() && FirstPersonCompat.shouldHideHead()
+                ? t.getCurrentModel().allHeadBone() : null;
+        boolean headHidden = head != null && head.isHidden();
+        boolean childrenHidden = head != null && head.childBonesAreHiddenToo();
+        if (head != null) head.setHidden(true);
+        try {
+            if (event != null && minecraft.player != null) {
+                EntityModelData modelData = event.getModelData();
+                // 使用 .set 来避免每次渲染创建新的 Matrix4f, 减少 allocation rate
+                this.dispatchedMat.set(poseStack.last().pose());
+                setCurrentModelRenderCycle(EModelRenderCycle.INITIAL);
+                poseStack.pushPose();
+                if (entity.getPose() == Pose.SLEEPING && (bedOrientation = entity.getBedOrientation()) != null) {
+                    float eyeHeight = entity.getEyeHeight(Pose.STANDING) - 0.1f;
+                    poseStack.translate((-bedOrientation.getStepX()) * eyeHeight, 0.0f, (-bedOrientation.getStepZ()) * eyeHeight);
+                }
+                setupRotations(entity, poseStack, modelData.lerpedAge, modelData.lerpBodyRot, partialTick);
+                if (t.getEntity().getVehicle() != null) {
+                    VehicleCapability.get(t.getEntity().getVehicle()).ifPresent(cap -> {
+                        Vector3f vector3f = cap.getExpressionOffset();
+                        if (vector3f != null) {
+                            poseStack.mulPose(new Quaternionf().rotateZYX(vector3f.z, 0.0f, vector3f.x).invert());
+                        }
+                    });
+                }
+                preRenderCallback(entity, poseStack, partialTick);
+                poseStack.translate(0.0f, 0.01f, 0.0f);
+                AnimatedGeoModel animatedGeoModel = t.getCurrentModel();
+                int textureIndex = resourceLocation == null ? t.getTextureIndex() : 0;
+                RenderType renderType = getRenderType(resourceLocation == null ? t.getTextureLocation() : resourceLocation, isBodyVisible(entity) && !entity.isInvisibleTo(minecraft.player), minecraft.shouldEntityAppearGlowing(entity), t.getCurrentModel().getGeoModel().isTranslucentTexture(textureIndex));
+                boolean useExtraPlayer = t.isRenderLayersFirst();
+                Color color = getRenderColor(t, partialTick, poseStack, multiBufferSource, null, packedLight);
+                renderWithBone(animatedGeoModel, t, partialTick, poseStack, multiBufferSource, null, packedLight, packOverlayCoords(entity, getHurtOverlayProgress(entity, partialTick)), color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
+                if (useExtraPlayer && !entity.isSpectator()) {
+                    render(t, partialTick, poseStack, multiBufferSource, packedLight, event, modelData);
+                }
+                if (renderType != null) {
+                    renderWithBoneAndRenderType(animatedGeoModel, t, partialTick, renderType, poseStack, multiBufferSource, textureIndex, null, packedLight, packOverlayCoords(entity, getHurtOverlayProgress(entity, partialTick)), color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
+                }
+                if (!useExtraPlayer && !entity.isSpectator()) {
+                    render(t, partialTick, poseStack, multiBufferSource, packedLight, event, modelData);
+                }
+                poseStack.popPose();
             }
-            setupRotations(entity, poseStack, modelData.lerpedAge, modelData.lerpBodyRot, partialTick);
-            if (t.getEntity().getVehicle() != null) {
-                VehicleCapability.get(t.getEntity().getVehicle()).ifPresent(cap -> {
-                    Vector3f vector3f = cap.getExpressionOffset();
-                    if (vector3f != null) {
-                        poseStack.mulPose(new Quaternionf().rotateZYX(vector3f.z, 0.0f, vector3f.x).invert());
-                    }
-                });
-            }
-            preRenderCallback(entity, poseStack, partialTick);
-            poseStack.translate(0.0f, 0.01f, 0.0f);
-            AnimatedGeoModel animatedGeoModel = t.getCurrentModel();
-            int textureIndex = resourceLocation == null ? t.getTextureIndex() : 0;
-            RenderType renderType = getRenderType(resourceLocation == null ? t.getTextureLocation() : resourceLocation, isBodyVisible(entity) && !entity.isInvisibleTo(minecraft.player), minecraft.shouldEntityAppearGlowing(entity), t.getCurrentModel().getGeoModel().isTranslucentTexture(textureIndex));
-            boolean useExtraPlayer = t.isRenderLayersFirst();
-            Color color = getRenderColor(t, partialTick, poseStack, multiBufferSource, null, packedLight);
-            renderWithBone(animatedGeoModel, t, partialTick, poseStack, multiBufferSource, null, packedLight, packOverlayCoords(entity, getHurtOverlayProgress(entity, partialTick)), color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
-            if (useExtraPlayer && !entity.isSpectator()) {
-                render(t, partialTick, poseStack, multiBufferSource, packedLight, event, modelData);
-            }
-            if (renderType != null) {
-                renderWithBoneAndRenderType(animatedGeoModel, t, partialTick, renderType, poseStack, multiBufferSource, textureIndex, null, packedLight, packOverlayCoords(entity, getHurtOverlayProgress(entity, partialTick)), color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
-            }
-            if (!useExtraPlayer && !entity.isSpectator()) {
-                render(t, partialTick, poseStack, multiBufferSource, packedLight, event, modelData);
-            }
-            poseStack.popPose();
+        } finally {
+            if (head != null) head.setHidden(headHidden, childrenHidden);
         }
         ((LivingEntityRendererAccessor) this).tlm$renderNameTag(entity, entityYaw, partialTick, poseStack, multiBufferSource, packedLight);
         if (fireRenderEvents) {

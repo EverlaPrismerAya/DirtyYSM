@@ -20,6 +20,7 @@ import net.everla.reimaginedysm.compat.optifine.OptiFineDetector;
 import net.everla.reimaginedysm.gpu.GpuCapability;
 import net.everla.reimaginedysm.gpu.GpuRenderPath;
 import net.everla.reimaginedysm.gpu.IrisRenderPath;
+import net.everla.reimaginedysm.compat.firstperson.FirstPersonCompat;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,6 +30,23 @@ import java.nio.IntBuffer;
 public class NativeModelRenderer {
     private static final Matrix4f projectionModelViewMatrix = new Matrix4f();
 
+    static boolean isPreview() {
+        // Only world rendering may use GPU draws. This also covers HUD mods that
+        // call the dispatcher directly without setting our explicit preview flag.
+        return ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer()
+                || !net.everla.ysmPhysLib.WorldPhysicsContext.allows(false);
+    }
+
+    static boolean isGpuPass(boolean firstPersonBody) {
+        // FirstPerson still renders a world body, with physics and head hiding,
+        // but must submit its vertices through Minecraft's buffered CPU path.
+        return !isPreview() && !firstPersonBody;
+    }
+
+    static boolean isGpuPass(boolean firstPersonBody, boolean globally) {
+        return globally || isGpuPass(firstPersonBody);
+    }
+
     public static void renderMesh(VertexConsumer buffer, PoseStack.Pose pose, GeoModel model, float[] boneParams, float[] stateBuffer, int textureIndex, int renderPartMask, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         renderMesh(buffer, pose, model, boneParams, stateBuffer, textureIndex, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, null);
     }
@@ -36,11 +54,11 @@ public class NativeModelRenderer {
     public static void renderMesh(VertexConsumer buffer, PoseStack.Pose pose, GeoModel model, float[] boneParams, float[] stateBuffer, int textureIndex, int renderPartMask, int packedLight, int packedOverlay, float red, float green, float blue, float alpha, net.minecraft.resources.ResourceLocation textureLocation) {
         OculusCompat.updatePBRState();
         RenderSystem.getProjectionMatrix().mul(RenderSystem.getModelViewMatrix(), projectionModelViewMatrix);
-        boolean isPreview = ModelPreviewRenderer.isPreview() || ModelPreviewRenderer.isExtraPlayer();
+        boolean isPreview = isPreview();
 
-        // GUI previews share the UI's deferred buffers and shader state. Keep them
-        // on the native CPU path until direct GPU draws can preserve that state.
-        if (!ModelPreviewRenderer.isPreview() && textureLocation != null && NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get() && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) {
+        // GUI previews, including the HUD paper doll, share deferred buffers and
+        // shader state with name tags and other UI. Submit them through that buffer.
+        if (isGpuPass(FirstPersonCompat.isFirstPersonActive(), com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER_GLOBALLY).get()) && textureLocation != null && NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get() && com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_GPU_RENDERER).get()) {
 
             if(!GpuCapability.isAvailable())
             {
@@ -49,7 +67,7 @@ public class NativeModelRenderer {
                 net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
             }
 
-            if (OculusCompat.isShaderPackInUse() && !isPreview) {
+            if (OculusCompat.isShaderPackInUse()) {
                 if (IrisRenderPath.tryRender(model, pose, boneParams, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
                     return;
                 }
@@ -60,7 +78,8 @@ public class NativeModelRenderer {
             }
         }
 
-        net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
+        // A GUI draw uses the restored animation without resetting the world's GPU solver.
+        if (!isPreview) net.everla.ysmPhysLib.GpuPhysics.fallback(boneParams);
         boneParams=net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model,boneParams);
         if (NativeLibLoader.isLoaded() && !com.elfmcys.yesstevemodel.config.ClientConfigScope.effective(GeneralConfig.USE_COMPATIBILITY_RENDERER).get()) { // WIP: SIMD MODEL RENDER
             nativeRenderModel(

@@ -413,12 +413,11 @@ public final class PhysCheck {
     }
 
     private static void context() {
-        assert !WorldPhysicsContext.allows(true,false) : "UI without level pass";
+        assert !WorldPhysicsContext.allows(false) : "UI without level pass";
         var view=new Matrix4f().rotateX(.3f).rotateY(.7f);
         WorldPhysicsContext.begin(view);
-        assert WorldPhysicsContext.allows(true,false);
-        assert !WorldPhysicsContext.allows(true,true) : "inventory/model selector simulated";
-        assert !WorldPhysicsContext.allows(false,false) : "nonplayer simulated";
+        assert WorldPhysicsContext.allows(false) : "world entity excluded";
+        assert !WorldPhysicsContext.allows(true) : "inventory/model selector/paper doll simulated";
         var model=new Matrix4f().translate(2,3,4).rotateZ(.2f);
         assert WorldPhysicsContext.modelToWorld(new Matrix4f(view).mul(model)).equals(model,1e-5f) : "camera entered physics";
         Matrix4f shadowView=new Matrix4f().rotateX(1.2f).rotateY(-.7f).translate(0,0,-12);
@@ -426,7 +425,7 @@ public final class PhysCheck {
         assert WorldPhysicsContext.modelToWorld(new Matrix4f(shadowView).mul(model)).equals(model,1e-5f) : "shadow camera entered physics";
         WorldPhysicsContext.end();
         assert WorldPhysicsContext.modelToWorld(new Matrix4f(view).mul(model)).equals(model,1e-5f) : "shadow pass corrupted main view";
-        WorldPhysicsContext.end();assert !WorldPhysicsContext.allows(true,false);
+        WorldPhysicsContext.end();assert !WorldPhysicsContext.allows(false);
     }
 
     private static void benchmark() {

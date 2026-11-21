@@ -27,8 +27,14 @@ public final class ClientSetupEvent {
             return;
         }
         registerKeyMappings();
-        dev.architectury.event.events.client.ClientTickEvent.CLIENT_POST.register(client -> net.everla.ysmPhysLib.GpuPhysics.tick());
-        ClientLifecycleEvent.CLIENT_STOPPING.register(client -> net.everla.ysmPhysLib.GpuPhysics.shutdown());
+        dev.architectury.event.events.client.ClientTickEvent.CLIENT_POST.register(client -> {
+            net.everla.ysmPhysLib.GpuPhysics.tick();
+            net.everla.reimaginedysm.gpu.GpuRenderPath.tick();
+        });
+        ClientLifecycleEvent.CLIENT_STOPPING.register(client -> {
+            net.everla.ysmPhysLib.GpuPhysics.shutdown();
+            net.everla.reimaginedysm.gpu.GpuRenderPath.shutdown();
+        });
         if (YesSteveModel.isAvailable()) {
             AnimationRegister.registerAnimationState();
         }

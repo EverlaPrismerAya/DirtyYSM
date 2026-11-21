@@ -31,6 +31,7 @@ public class GeneralConfig {
     public static ForgeConfigSpec.BooleanValue PARCOOL;
 
     public static ForgeConfigSpec.BooleanValue USE_GPU_RENDERER;
+    public static ForgeConfigSpec.BooleanValue USE_GPU_RENDERER_GLOBALLY;
 
     public static ForgeConfigSpec.EnumValue<ModelLoadingMode> MODEL_LOADING_MODE;
 
@@ -106,6 +107,8 @@ public class GeneralConfig {
         USE_COMPATIBILITY_RENDERER = builder.define("UseCompatibilityRenderer", false);
         builder.comment("Test renderer.");
         USE_GPU_RENDERER = builder.define("UseGpuRenderer", true);
+        builder.comment("Experimental: render all YSM entity models on GPU, including previews and first-person bodies. May cause visual errors. Requires UseGpuRenderer.");
+        USE_GPU_RENDERER_GLOBALLY = builder.define("UseGpuRendererGlobally", true);
         builder.comment("Local/client-only model loading mode. Modded servers control their own mode.");
         MODEL_LOADING_MODE = builder.defineEnum("ModelLoadingMode", ModelLoadingMode.POTATO);
         builder.comment("Always use client-only mode");

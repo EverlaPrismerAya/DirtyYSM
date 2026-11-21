@@ -17,7 +17,7 @@ public final class PhysConfig {
 
     public static void define(ForgeConfigSpec.Builder builder, boolean local) {
         builder.push("physics_groups");
-        var enabled=builder.comment("Enable ysmPhys simulation for world players only.").define("Enabled",true);
+        var enabled=builder.comment("Enable ysmPhys simulation for world entities using YSM models. UI previews are excluded.").define("Enabled",true);
         var fps=builder.comment("Physics updates per second (0 disables simulation). Lower rates use larger fixed steps.")
                 .defineInRange("SimulationFPS",60,0,120);
         var gpu=builder.comment("Experimental OpenGL compute physics. Supports Oculus/Iris. Collision dependency groups use CPU physics with GPU matrices; unsupported hardware and CPU pose consumers use CPU. No guaranteed speedup.")

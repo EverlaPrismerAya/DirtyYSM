@@ -116,6 +116,8 @@ final class GpuPhysKernel implements AutoCloseable {
         for(int i=0;i<buffers.length;i++) GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,i,buffers[i]);
     }
     private void dispatch() {
+        // Do not overwrite matrices while a previous pass still reads this instance.
+        GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
         GL43.glDispatchCompute(instances*model.trees,1,1);
         GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
         int error=GL11.glGetError();

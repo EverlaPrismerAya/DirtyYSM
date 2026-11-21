@@ -34,7 +34,6 @@ public final class GpuMeshBuilder {
         int vao = GL30.glGenVertexArrays();
         int vbo = GlStateManager._glGenBuffers();
         int ibo = GlStateManager._glGenBuffers();
-        int ssbo = GlStateManager._glGenBuffers();
 
         GL30.glBindVertexArray(vao);
         GlStateManager._glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
@@ -58,12 +57,9 @@ public final class GpuMeshBuilder {
         GlStateManager._glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GlStateManager._glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        GlStateManager._glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
-        GL45.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, (long) boneCount * 144, GL15.GL_DYNAMIC_DRAW);
-        GlStateManager._glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
         GeoModel.nReleaseGpuMeshScratch(handle);
 
-        return new GpuMesh(handle, vao, vbo, ibo, ssbo, vertexCount, indexCount, boneCount, meta[3], meta[4], meta[5], meta[6], meta[7], meta[8]);
+        return new GpuMesh(handle, vao, vbo, ibo, vertexCount, indexCount, boneCount, meta[3], meta[4], meta[5], meta[6], meta[7], meta[8]);
     }
 
     private static ByteBuffer serializeModel(GeoModel model) {

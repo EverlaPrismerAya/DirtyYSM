@@ -117,3 +117,4 @@ tools/
 .env.*
 /scripts/
 /docs/
+/common/logs/
