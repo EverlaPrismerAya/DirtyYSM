@@ -24,6 +24,8 @@ public class RYSMBinding extends ContextBinding {
                 ? delta.x * Math.cos(yaw) + delta.z * Math.sin(yaw)
                 : -delta.x * Math.sin(yaw) + delta.z * Math.cos(yaw);
         double speed = displacement * 20.0 / elapsedTicks;
-        return Math.abs(speed) < 1.0E-6 ? 0 : speed;
+        // Minecraft's float/trig movement calculations can leave a small cross-axis component.
+        double tolerance = Math.max(1.0E-6, Math.hypot(delta.x, delta.z) * 20.0 / elapsedTicks * 1.0E-4);
+        return Math.abs(speed) <= tolerance ? 0 : speed;
     }
 }
