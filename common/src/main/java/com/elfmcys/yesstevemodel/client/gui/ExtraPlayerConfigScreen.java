@@ -109,7 +109,7 @@ public class ExtraPlayerConfigScreen extends OptionScreen {
                     }
                 }))
                 .add(new SliderOptionRow(0,0,0,22,new Option<Double>("physics_fps",()->physicsFps.get().doubleValue(),
-                        value->physicsFps.set((int)Math.round(value))),0,120,1," FPS")));
+                        value->physicsFps.set((int)Math.round(value))),1,120,1," FPS")));
         groups.add(misc);
     }
 }
