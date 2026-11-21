@@ -357,6 +357,11 @@ public final class GpuPhysCheck {
             assert GL32.glGetInteger64i(GL43.GL_SHADER_STORAGE_BUFFER_START,2)==alignment;
             GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER,2,0);GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER,0);GL15.glDeleteBuffers(sentinel);
             assert !GpuPhysics.requiresCpuPose(geometry,topology.affected,p);
+            geometry.bakedBones.get(2).facingCameraSubtree=true;
+            assert GpuPhysics.requiresCpuPose(geometry,topology.affected,p) : "billboard consumed stale GPU-only pose";
+            assert !GpuPhysics.requiresCpuPose(geometry,new boolean[topology.affected.length],p)
+                    : "unrelated billboard disabled GPU physics";
+            geometry.bakedBones.get(2).facingCameraSubtree=false;
             p[2*12+11]=1;assert GpuPhysics.requiresCpuPose(geometry,topology.affected,p);
         }
     }

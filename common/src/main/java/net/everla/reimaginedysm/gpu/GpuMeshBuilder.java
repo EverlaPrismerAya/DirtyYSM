@@ -67,8 +67,8 @@ public final class GpuMeshBuilder {
         int totalCubes = 0;
         int totalQuads = 0;
         for (GeoModel.BakedBone bone : model.bakedBones) {
-            totalCubes += bone.cubes.size();
-            for (GeoModel.BakedCube cube : bone.cubes) {
+            totalCubes += bone.acceleratedCubes().size();
+            for (GeoModel.BakedCube cube : bone.acceleratedCubes()) {
                 totalQuads += cube.quads.size();
             }
         }
@@ -82,8 +82,8 @@ public final class GpuMeshBuilder {
             buf.putFloat(bone.pivotX);
             buf.putFloat(bone.pivotY);
             buf.putFloat(bone.pivotZ);
-            buf.putInt(bone.cubes.size());
-            for (GeoModel.BakedCube cube : bone.cubes) {
+            buf.putInt(bone.acceleratedCubes().size());
+            for (GeoModel.BakedCube cube : bone.acceleratedCubes()) {
                 buf.put((byte) (cube.cullable ? 1 : 0));
                 buf.putInt(cube.quads.size());
                 for (GeoModel.BakedQuad quad : cube.quads) {

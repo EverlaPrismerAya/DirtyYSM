@@ -8,7 +8,40 @@ import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 
 /** Run with :common:checkRenderContext; no Minecraft instance or GL context needed. */
 public final class RenderContextCheck {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        FacingCameraSplitCheck.run();
+        for (float projectionY : new float[] {-1, 1}) {
+            Matrix4f root = new Matrix4f().rotateZ((float) Math.PI).rotateX(-.2f)
+                    .rotateY(.7f).scale(-32, -32, 32);
+            Matrix4f bone = new Matrix4f().translate(1, 2, 3);
+            var pivot = new Matrix4f(root).mul(bone).getTranslation(new org.joml.Vector3f());
+            FacingCameraTransform.apply(bone, FacingCameraTransform.previewToCamera(root, projectionY));
+            Matrix4f view = new Matrix4f(root).mul(bone);
+            assert view.getTranslation(new org.joml.Vector3f()).distance(pivot) < 1e-4f;
+            assert view.m00() > 0 && view.m11() * projectionY > 0 : "preview billboard upside down";
+            // A local positive Z turn must have the same projected handedness
+            // in GUI (Y down) and perspective/first-person (Y up).
+            view.rotateZ(.3f);
+            assert view.m01() * projectionY > 0 : "preview spin reversed";
+        }
+        // Camera yaw/pitch, entity rotation, a rotated/nonuniformly scaled parent,
+        // and nested billboard groups must retain their pivots and face the view.
+        for (int i = 0; i < 20; i++) {
+            Matrix4f root = new Matrix4f().rotateXYZ(i * .13f, i * .27f, .2f).scale(-.7f, -.7f, .7f);
+            Matrix4f bone = new Matrix4f().translate(2, 3, 4).rotateXYZ(.4f, .7f, .1f).scale(2, 3, 4).translate(1, 2, 3);
+            org.joml.Vector3f pivot = new Matrix4f(root).mul(bone).getTranslation(new org.joml.Vector3f());
+            FacingCameraTransform.apply(bone, root);
+            Matrix4f view = new Matrix4f(root).mul(bone);
+            assert view.getTranslation(new org.joml.Vector3f()).distance(pivot) < 1e-4f;
+            assert Math.abs(view.m01()) + Math.abs(view.m02()) + Math.abs(view.m10())
+                    + Math.abs(view.m12()) + Math.abs(view.m20()) + Math.abs(view.m21()) < 1e-4f;
+            Matrix4f nested = new Matrix4f(bone).translate(1, 0, 0).rotateY(.9f);
+            FacingCameraTransform.apply(nested, root);
+            assert Math.abs(new Matrix4f(root).mul(nested).m20()) < 1e-4f;
+        }
+        Matrix4f hidden = new Matrix4f().scale(0);
+        FacingCameraTransform.apply(hidden, new Matrix4f().scale(0));
+        assert hidden.isFinite();
         var body = new BufferBuilder(256);
         var outline = new BufferBuilder(256);
         assert NativeModelRenderer.isGpuBuffer(body, 1) : "ordinary model lost GPU rendering";

@@ -45,7 +45,7 @@ public final class GpuPhysics {
         else if(!root.isFinite() || Math.abs(root.determinant())<1e-12f) reason="singular/non-finite model transform";
         else if(!supportsDefinition(owner.getGeoModel().ysmPhysics)) reason="CPU physics active; all dependency groups require world collisions";
         else if(!supportedScale(owner.getGeoModel().ysmPhysics,parameters,root)) reason="nonuniform/singular collision transforms require CPU physics";
-        else if(requiresCpuPose(owner.getGeoModel(),gpuAffected(owner.getGeoModel().ysmPhysics),parameters)) reason="physical subtree has a CPU attachment, locator or bone query";
+        else if(requiresCpuPose(owner.getGeoModel(),gpuAffected(owner.getGeoModel().ysmPhysics),parameters)) reason="physical subtree requires a CPU pose (attachment, locator, bone query or FacingCamera)";
         else if(rejected.containsKey(owner.getGeoModel().ysmPhysics)) reason=rejected.get(owner.getGeoModel().ysmPhysics);
         if(reason!=null) {report(reason);deactivate(parameters);return false;}
         RenderSystem.assertOnRenderThread();
@@ -179,7 +179,8 @@ public final class GpuPhysics {
             for(var list:lists) for(int id:list) ids.add(id);
         for(int i=0;i<affected.length;i++) if(affected[i]) {
             var bone=model.topLevelBones().get(i);
-            if(ids.contains(bone.getBoneId()) || bone.getName().equals("ViewLocator") || bone.getName().equals("AllHead")
+            // The Java billboard draw needs CPU-readable transforms for this subtree.
+            if(model.bakedBones.get(i).facingCameraSubtree || ids.contains(bone.getBoneId()) || bone.getName().equals("ViewLocator") || bone.getName().equals("AllHead")
                     || parameters[i*12+11]!=0) return true;
         }
         return false;

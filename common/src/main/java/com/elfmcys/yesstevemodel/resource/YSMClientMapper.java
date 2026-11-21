@@ -574,6 +574,7 @@ public class YSMClientMapper {
         GeoModel mesh = buildMesh(geoBones.toArray(new GeoBone[0]), parentMap, context, translucencyArray);
 
         mesh.bakedBones = bakedBones;
+        GeoModel.classifyFacingCameraBones(bakedBones);
         if (hasPhysics) mesh.ysmPhysics = new net.everla.ysmPhysLib.PhysDefinition(mesh,
                 message -> com.elfmcys.yesstevemodel.YesSteveModel.LOGGER.warn("[ysmPhys] {}: {}", rawGeo.identifier, message));
         if (NativeLibLoader.isLoaded()) mesh.buildNativeCache();

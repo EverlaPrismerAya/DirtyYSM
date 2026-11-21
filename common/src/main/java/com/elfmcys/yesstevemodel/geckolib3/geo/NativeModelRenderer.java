@@ -76,10 +76,14 @@ public class NativeModelRenderer {
 
             if (OculusCompat.isShaderPackInUse()) {
                 if (IrisRenderPath.tryRender(model, pose, boneParams, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
+                    renderFacingCamera(buffer, pose, model, boneParams, stateBuffer, textureIndex,
+                            renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, isPreview);
                     return;
                 }
             } else {
                 if (GpuRenderPath.tryRender(model, pose, boneParams, stateBuffer, textureIndex, renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, textureLocation)) {
+                    renderFacingCamera(buffer, pose, model, boneParams, stateBuffer, textureIndex,
+                            renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, isPreview);
                     return;
                 }
             }
@@ -104,6 +108,8 @@ public class NativeModelRenderer {
                     red, green, blue, alpha,
                     isPreview
             );
+            renderFacingCamera(buffer, pose, model, boneParams, stateBuffer, textureIndex,
+                    renderPartMask, packedLight, packedOverlay, red, green, blue, alpha, isPreview);
         } else {
             renderModel(
                     buffer,
@@ -123,6 +129,15 @@ public class NativeModelRenderer {
         }
     }
 
+    private static void renderFacingCamera(VertexConsumer buffer, PoseStack.Pose pose, GeoModel model,
+            float[] params, float[] state, int texture, int part, int light, int overlay,
+            float r, float g, float b, float a, boolean preview) {
+        if (!model.hasFacingCameraBones) return;
+        renderModel(buffer, pose, projectionModelViewMatrix, OptiFineDetector.isOptifinePresent(), model,
+                net.everla.ysmPhysLib.PlayerPhysics.hideEndpoints(model, params), state,
+                texture, part, light, overlay, r, g, b, a, preview, true);
+    }
+
     public static void renderModel(
             VertexConsumer vertexConsumer,
             PoseStack.Pose pose,
@@ -135,6 +150,16 @@ public class NativeModelRenderer {
             int packedLight, int packedOverlay,
             float r, float g, float b, float a,
             boolean isPreview) {
+        renderModel(vertexConsumer, pose, projectionModelViewMatrix, isCompatMode, mesh,
+                boneParams, stateBuffer, textureIndex, renderPartMask, packedLight, packedOverlay,
+                r, g, b, a, isPreview, false);
+    }
+
+    private static void renderModel(VertexConsumer vertexConsumer, PoseStack.Pose pose,
+            Matrix4f projectionModelViewMatrix, boolean isCompatMode, GeoModel mesh,
+            float[] boneParams, float[] stateBuffer, int textureIndex, int renderPartMask,
+            int packedLight, int packedOverlay, float r, float g, float b, float a,
+            boolean isPreview, boolean facingOnly) {
 
         if (mesh.bakedBones == null || mesh.bakedBones.isEmpty()) return;
 
@@ -143,6 +168,12 @@ public class NativeModelRenderer {
         Matrix3f rootNormalMC = pose.normal();
         Matrix4f projMat = RenderSystem.getProjectionMatrix();
 
+        Matrix4f modelToCamera = FacingCameraTransform.previewToCamera(rootPoseMat, projMat.m11());
+        if (mesh.hasFacingCameraBones && net.everla.ysmPhysLib.WorldPhysicsContext.allows(isPreview)) {
+            modelToCamera = net.everla.ysmPhysLib.WorldPhysicsContext.modelToWorld(rootPoseMat);
+            new Matrix4f().rotation(new org.joml.Quaternionf(net.minecraft.client.Minecraft.getInstance()
+                    .getEntityRenderDispatcher().cameraOrientation()).conjugate()).mul(modelToCamera, modelToCamera);
+        }
         Matrix4f identityMat = new Matrix4f();
         Matrix4f globalBoneMat = new Matrix4f();
         Matrix4f projBoneMat = new Matrix4f();
@@ -157,19 +188,19 @@ public class NativeModelRenderer {
         Matrix4f[] boneLocalTransforms = new Matrix4f[mesh.bakedBones.size()];
         boolean[] boneVisible = new boolean[mesh.bakedBones.size()];
 
-        for (int i = 0; i < mesh.bakedBones.size(); i++) {
-            calculateBoneMatrix(i, mesh.bakedBones, boneParams, boneLocalTransforms, boneVisible, identityMat, stateBuffer);
+        if (!facingOnly) {
+            for (int i = 0; i < mesh.bakedBones.size(); i++) {
+                calculateBoneMatrix(i, mesh.bakedBones, boneParams, boneLocalTransforms, boneVisible,
+                        identityMat, stateBuffer, modelToCamera);
+            }
         }
-
         for (int i = 0; i < mesh.bakedBones.size(); i++) {
-            if (!boneVisible[i]) {
-                continue;
-            }
-
             GeoModel.BakedBone bone = mesh.bakedBones.get(i);
-            if (renderPartMask != 0 && bone.partMask != renderPartMask && bone.partMask != 3) {
-                continue;
-            }
+            if (facingOnly && !bone.facingCameraSubtree) continue;
+            if (renderPartMask != 0 && bone.partMask != renderPartMask && bone.partMask != 3) continue;
+            calculateBoneMatrix(i, mesh.bakedBones, boneParams, boneLocalTransforms, boneVisible,
+                    identityMat, stateBuffer, modelToCamera);
+            if (!boneVisible[i] || boneParams[i * 12 + 9] != 0 || bone.cubes.isEmpty()) continue;
 
             Matrix4f localBoneMat = boneLocalTransforms[i];
             globalBoneMat.set(rootPoseMat).mul(localBoneMat);
@@ -204,7 +235,7 @@ public class NativeModelRenderer {
         }
     }
 
-    private static Matrix4f calculateBoneMatrix(int idx, java.util.List<GeoModel.BakedBone> bones, float[] boneParams, Matrix4f[] cache, boolean[] visibleCache, Matrix4f rootPose, float[] stateBuffer) {
+    private static Matrix4f calculateBoneMatrix(int idx, java.util.List<GeoModel.BakedBone> bones, float[] boneParams, Matrix4f[] cache, boolean[] visibleCache, Matrix4f rootPose, float[] stateBuffer, Matrix4f modelToCamera) {
         if (cache[idx] != null) return cache[idx];
 
         GeoModel.BakedBone bone = bones.get(idx);
@@ -212,9 +243,9 @@ public class NativeModelRenderer {
         boolean isVisible = true;
 
         if (bone.parentIdx != -1) {
-            parentMatrix = calculateBoneMatrix(bone.parentIdx, bones, boneParams, cache, visibleCache, rootPose, stateBuffer);
+            parentMatrix = calculateBoneMatrix(bone.parentIdx, bones, boneParams, cache, visibleCache, rootPose, stateBuffer, modelToCamera);
             // 如果父骨骼不可見，子骨骼必然跟著不可見
-            if (!visibleCache[bone.parentIdx]) {
+            if (!visibleCache[bone.parentIdx] || boneParams[bone.parentIdx * 12 + 10] != 0) {
                 isVisible = false;
             }
         }
@@ -249,9 +280,13 @@ public class NativeModelRenderer {
                 (bone.pivotY + animTy) * 0.0625f,
                 (bone.pivotZ + animTz) * 0.0625f
         );
-        localMat.rotateZ(animRz);
-        localMat.rotateY(animRy);
-        localMat.rotateX(animRx);
+        if (bone.name.startsWith("FacingCamera")) {
+            FacingCameraTransform.apply(localMat, modelToCamera);
+        } else {
+            localMat.rotateZ(animRz);
+            localMat.rotateY(animRy);
+            localMat.rotateX(animRx);
+        }
 
 //        if (bone.name.equals("gun")) {
 //            //"".hashCode();

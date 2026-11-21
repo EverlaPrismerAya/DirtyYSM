@@ -78,6 +78,8 @@ public class GeoModel {
 
     public final boolean hasCustomLimbs;
 
+    public final boolean hasFacingCameraBones;
+
     @NotNull
     private final GeometryDescription properties;
 
@@ -101,6 +103,13 @@ public class GeoModel {
     public static class BakedBone {
         public String name;
         public boolean glow;
+        public boolean facingCameraSubtree;
+
+        // Keep the full skeleton/indexing for animation and physics, but only
+        // submit ordinary geometry to the native/GPU caches.
+        public List<BakedCube> acceleratedCubes() {
+            return facingCameraSubtree ? List.of() : cubes;
+        }
         public int parentIdx = -1;
         public float pivotX, pivotY, pivotZ;
         public float rotX, rotY, rotZ;
@@ -108,6 +117,16 @@ public class GeoModel {
         // Unfiltered baked cube faces: collision must not depend on texture transparency.
         public List<float[]> physicsFaces = new ObjectArrayList<>();
         public int partMask;
+    }
+
+    public static void classifyFacingCameraBones(List<BakedBone> bones) {
+        for (BakedBone bone : bones) {
+            bone.facingCameraSubtree = bone.name.startsWith("FacingCamera");
+            for (int parent = bone.parentIdx; parent != -1 && !bone.facingCameraSubtree;
+                 parent = bones.get(parent).parentIdx) {
+                bone.facingCameraSubtree = bones.get(parent).name.startsWith("FacingCamera");
+            }
+        }
     }
 
     public static class BakedCube {
@@ -256,13 +275,17 @@ public class GeoModel {
     public void buildNativeCache() {
         if (bakedBones == null || bakedBones.isEmpty()) return;
 
+        this.nativeModelHandle = nInitModelCache(serializeNativeModel());
+    }
+
+    private ByteBuffer serializeNativeModel() {
         int totalBones = bakedBones.size();
         int totalCubes = 0;
         int totalQuads = 0;
 
         for (BakedBone bone : bakedBones) {
-            totalCubes += bone.cubes.size();
-            for (BakedCube cube : bone.cubes) {
+            totalCubes += bone.acceleratedCubes().size();
+            for (BakedCube cube : bone.acceleratedCubes()) {
                 totalQuads += cube.quads.size();
             }
         }
@@ -279,8 +302,8 @@ public class GeoModel {
             buffer.putFloat(bone.pivotY);
             buffer.putFloat(bone.pivotZ);
 
-            buffer.putInt(bone.cubes.size());
-            for (BakedCube cube : bone.cubes) {
+            buffer.putInt(bone.acceleratedCubes().size());
+            for (BakedCube cube : bone.acceleratedCubes()) {
                 buffer.put((byte) (cube.cullable ? 1 : 0));
                 buffer.putInt(cube.quads.size());
                 for (BakedQuad quad : cube.quads) {
@@ -300,7 +323,7 @@ public class GeoModel {
         }
 
         buffer.position(0);
-        this.nativeModelHandle = nInitModelCache(buffer);
+        return buffer;
     }
 
     public void freeNativeCache() {
@@ -315,6 +338,7 @@ public class GeoModel {
 
     public GeoModel(GeoBone[] geoBones, String[][] strArr, boolean[] zArr, @NotNull GeometryDescription properties, boolean[] zArr2) {
         this.bones = ObjectLists.unmodifiable(ObjectArrayList.wrap(geoBones));
+        this.hasFacingCameraBones = this.bones.stream().anyMatch(bone -> bone.getName().startsWith("FacingCamera"));
         this.leftHandIds = resolveBoneIds(strArr[0]);
         this.rightHandIds = resolveBoneIds(strArr[1]);
         this.elytraIds = resolveBoneIds(strArr[2]);
