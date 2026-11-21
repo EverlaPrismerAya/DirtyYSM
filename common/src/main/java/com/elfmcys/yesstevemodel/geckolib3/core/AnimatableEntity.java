@@ -395,4 +395,10 @@ public abstract class AnimatableEntity<TEntity extends Entity> {
     public AnimationState getAnimationState(String name) {
         return this.animationStates.getOrDefault(name, AnimationState.IDLE);
     }
+
+    public boolean isAnimationPlaying(String name) {
+        for (var controller : manager.getAnimationControllers())
+            if (controller.isAnimationPlaying(name)) return true;
+        return false;
+    }
 }

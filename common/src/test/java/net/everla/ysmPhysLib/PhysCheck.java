@@ -14,8 +14,65 @@ import java.util.List;
 public final class PhysCheck {
     private static final Object WORLD=new Object();
     public static void main(String[] args) throws Exception {
-        parser(); movingContacts(); hybridPartition(); airDrag(); topology(); rotations(); collision(); simulation(); cadence(); bodyCollision(); blockCollision(); context(); example(); actualModel(); benchmark();
+        parser(); conditionalGroups(); movingContacts(); hybridPartition(); airDrag(); topology(); rotations(); collision(); simulation(); cadence(); bodyCollision(); blockCollision(); context(); example(); actualModel(); benchmark();
         System.out.println("PASS: ysmPhys parser, topology, rigid branches, convex contacts, fixed steps, lifecycle, UI gate and isolation");
+    }
+
+    private static void conditionalGroups() {
+        var wing=PhysParameters.parse("ysmPhys#enable=(v.roaming.wings_phys>=1,variable.roaming.wings_phys_enable=1),g=0@leftwing",PhysParameters.DEFAULT);
+        assert wing.enabled(n->false,n->1);
+        var processor=new com.elfmcys.yesstevemodel.geckolib3.core.processor.AnimationProcessor<>(null);
+        var roaming=new com.elfmcys.yesstevemodel.molang.runtime.HashMapStruct(true);
+        int phys=com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool.computeIfAbsent("wings_phys");
+        int enable=com.elfmcys.yesstevemodel.geckolib3.core.molang.util.StringPool.computeIfAbsent("wings_phys_enable");
+        roaming.putProperty(phys,2f);roaming.putProperty(enable,1f);processor.setRoamingProperties(roaming);
+        assert wing.enabled(n->false,processor::physicsVariable);
+        roaming.putProperty(enable,0f);
+        assert !wing.enabled(n->false,processor::physicsVariable) : "runtime roaming changes were not read";
+        assert processor.physicsVariable("v.roaming.missing")==0 && processor.physicsVariable("variable.missing")==0;
+        assert !wing.enabled(n->false,n->n.endsWith("wings_phys")?2:0) : "whitelist must require both variables";
+        assert !wing.enabled(n->false,n->n.endsWith("wings_phys")?.5:1);
+        for(String op:List.of("=",">=","<=",">","<","!=")) {
+            var p=PhysParameters.parse("ysmPhys#enable=(v.x"+op+"-1.5e0)@test",PhysParameters.DEFAULT);
+            assert p.enabled(n->false,n->-1.5)==List.of("=",">=","<=").contains(op) : op;
+            assert p.enabled(n->false,n->-2)==List.of("<=","<","!=").contains(op) : op;
+            assert p.enabled(n->false,n->0)==List.of(">=",">","!=").contains(op) : op;
+        }
+        var robe=PhysParameters.parse("ysmPhys#disable=(jump,fly),enable=(v.on=1)@robe",PhysParameters.DEFAULT);
+        assert !robe.enabled("jump"::equals,n->1) && !robe.enabled("fly"::equals,n->1);
+        assert robe.enabled("idle"::equals,n->1) && !robe.enabled("idle"::equals,n->0);
+        var blacklist=PhysParameters.parse("ysmPhys#disable=(v.x>=1,v.y!=0)@test",PhysParameters.DEFAULT);
+        assert !blacklist.enabled(n->false,n->1) && blacklist.enabled(n->false,n->n.equals("v.x")?1:0);
+        assert PhysParameters.parse("ysmPhys@child",wing).equals(wing);
+        var override=PhysParameters.parse("ysmPhys#enable=(jump)@child",wing);
+        assert override.enabled("jump"::equals,n->0) && !override.enabled(n->false,n->1);
+        for(String entry:List.of("enable=()","disable=(jump,)","enable=(v.x==1)","enable=(v.x=NaN)",
+                "enable=(v.x>1e99)","enable=(v.x=1,jump)","enable=(jump","disable=((jump))","enable=(v.x!1)")) {
+            try { PhysParameters.parse("ysmPhys#"+entry+"@test",PhysParameters.DEFAULT); throw new AssertionError(entry); }
+            catch(IllegalArgumentException expected) {}
+        }
+        var geometry=model(bone("ysmPhys#disable=(jump)@robe",-1,0,0,0),bone("ysmPhys@tip",0,8,0,0),
+                bone("ysmPhysEnd@end",1,16,0,0),bone("ysmPhys@independent",-1,32,0,0),bone("ysmPhysEnd@other",3,48,0,0));
+        var d=definition(geometry);var sim=new PhysSimulation(d);var p=parameters(geometry);
+        var on=PlayerPhysics.enabled(d,n->false,n->0);var off=PlayerPhysics.enabled(d,"jump"::equals,n->0);
+        assert !off[0]&&!off[1]&&off[3] : "unrelated chain must remain enabled";
+        sim.setEnabled(p,on);
+        for(int i=0;i<60;i++) sim.update(p,new Matrix4f(),i/60.0,false,WORLD,0,0,0);
+        assert Math.abs(p[2])>.01 : "fixture has no physics";
+        sim.setEnabled(p,off);
+        assert p[0]==0&&p[1]==0&&p[2]==0&&p[12]==0&&p[13]==0&&p[14]==0 : "disabled chain retained physics rotation";
+        for(int i=60;i<120;i++) {sim.restore(p);sim.update(p,new Matrix4f(),i/60.0,false,WORLD,0,0,0);}
+        assert p[2]==0&&Math.abs(p[3*12+2])>.01;
+        sim.setEnabled(p,on);
+        sim.update(p,new Matrix4f(),2,false,WORLD,0,0,0);
+        assert p[2]==0 : "re-enable must start at animation pose";
+        for(int i=121;i<180;i++) {sim.restore(p);sim.update(p,new Matrix4f(),i/60.0,false,WORLD,0,0,0);}
+        assert Math.abs(p[2])>.01 : "re-enabled chain did not resume";
+        // Disabling the last chain must also restore an already-applied correction.
+        sim.setEnabled(p,new boolean[d.bones.size()]);
+        sim.update(p,new Matrix4f(),3,false,WORLD,0,0,0);
+        assert p[2]==0&&p[3*12+2]==0;
+        System.out.println("PASS: conditional physics comparisons, animation lists, inheritance, blacklist priority, restore/resume and independent chains");
     }
 
     private static void movingContacts() {

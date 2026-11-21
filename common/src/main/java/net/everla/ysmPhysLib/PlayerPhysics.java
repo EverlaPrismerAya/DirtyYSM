@@ -38,6 +38,12 @@ public final class PlayerPhysics {
         if(definition==null || definition.joints.isEmpty()) return;
         if(model.ysmPhysics==null) model.ysmPhysics=new PhysSimulation(definition);
         model.ysmPhysics.setFrameRate(fps);
+        boolean[] enabled=enabled(definition,animatable::isAnimationPlaying,animatable.getEvaluationContext()::physicsVariable);
+        boolean allEnabled=true;
+        for(var joint:definition.joints) allEnabled&=enabled[joint.bone()];
+        // Conditional groups use the CPU solver while disabled; GPU topology remains immutable.
+        if(!allEnabled) GpuPhysics.deactivate(model.getMatrixData());
+        model.ysmPhysics.setEnabled(model.getMatrixData(),enabled);
         var entity=animatable.entity;
         double x=Mth.lerp(partialTick,entity.xo,entity.getX());
         double y=Mth.lerp(partialTick,entity.yo,entity.getY());
@@ -48,10 +54,19 @@ public final class PlayerPhysics {
         var cameraPos=camera.getPosition();
         Matrix4f root=new Matrix4f().translation((float)(cameraPos.x-x),(float)(cameraPos.y-y),(float)(cameraPos.z-z))
                 .mul(WorldPhysicsContext.modelToWorld(renderPose));
-        if(GpuPhysics.prepare(model,root,(entity.tickCount+partialTick)/20.0,mc.isPaused(),entity.level(),x,y,z,fps,
+        if(allEnabled && GpuPhysics.prepare(model,root,(entity.tickCount+partialTick)/20.0,mc.isPaused(),entity.level(),x,y,z,fps,
                 animatable.getTextureLocation()!=null,bounds->entity.level().getBlockCollisions(entity,bounds))) return;
         model.ysmPhysics.update(model.getMatrixData(),root,(entity.tickCount+partialTick)/20.0,mc.isPaused(),
                 entity.level(),x,y,z,bounds->entity.level().getBlockCollisions(entity,bounds));
+    }
+
+    static boolean[] enabled(PhysDefinition definition,java.util.function.Predicate<String> animation,
+                             java.util.function.ToDoubleFunction<String> values) {
+        boolean[] result=new boolean[definition.bones.size()];
+        java.util.Arrays.fill(result,true);
+        for(var joint:definition.joints) result[joint.bone()]=(joint.parent()<0||result[joint.parent()])
+                &&joint.parameters().enabled(animation,values);
+        return result;
     }
 
     public static float[] hideEndpoints(com.elfmcys.yesstevemodel.geckolib3.geo.render.built.GeoModel model, float[] parameters) {

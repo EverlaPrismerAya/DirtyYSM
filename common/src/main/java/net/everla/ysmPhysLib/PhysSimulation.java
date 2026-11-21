@@ -20,6 +20,8 @@ public final class PhysSimulation {
     private final Quaternionf[] rotations, previousRotations;
     private List<PhysDefinition.Joint> activeJoints;
     private boolean[] active;
+    private boolean[] enabled;
+    private boolean hybrid;
     private float[] base;
     private Matrix4f currentRoot;
     private boolean applied;
@@ -51,11 +53,26 @@ public final class PhysSimulation {
     }
 
     void partition(float[] parameters, boolean hybrid) {
-        if((active!=null)==hybrid) return;
+        if(this.hybrid==hybrid) return;
         restore(parameters);
-        active=hybrid?definition.cpuCollisionIslands():null;
-        activeJoints=hybrid?definition.joints.stream().filter(j->active[j.bone()]).toList():definition.joints;
+        this.hybrid=hybrid;
+        rebuildActive();
         invalidate();
+    }
+
+    public void setEnabled(float[] parameters, boolean[] enabled) {
+        if(java.util.Arrays.equals(this.enabled,enabled)) return;
+        restore(parameters);
+        this.enabled=enabled.clone();
+        rebuildActive();
+        invalidate();
+    }
+
+    private void rebuildActive() {
+        active=hybrid?definition.cpuCollisionIslands():new boolean[definition.bones.size()];
+        if(!hybrid) java.util.Arrays.fill(active,true);
+        if(enabled!=null) for(int i=0;i<active.length;i++) active[i]&=enabled[i];
+        activeJoints=definition.joints.stream().filter(j->active[j.bone()]).toList();
     }
 
     public void invalidate() {initialized=false;lastTime=Double.NaN;accumulator=0;}

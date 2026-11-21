@@ -147,6 +147,20 @@ public class AnimationControllerRuntime<T extends AnimatableEntity<?>> implement
     }
 
     @Override
+    public boolean isAnimationPlaying(String name) {
+        if(currentEntry==null) return false;
+        if(currentEntry.getSubName()!=null) return childController!=null&&childController.isAnimationPlaying(name);
+        for(int i=0;i<activeSlotCount;i++) {
+            var slot=animationSlots.get(i);
+            var animation=slot.animationControllerInstance.getCurrentAnimation();
+            if(slot.condition.isActive()&&animation!=null
+                    &&slot.animationControllerInstance.getAnimationState()!=com.elfmcys.yesstevemodel.geckolib3.core.enums.AnimationState.IDLE
+                    &&name.equals(animation.animationName)) return true;
+        }
+        return false;
+    }
+
+    @Override
     public String getCurrentAnimation() {
         if (this.currentEntry != null) {
             if (this.currentEntry.getSubName() != null && this.childController != null) {

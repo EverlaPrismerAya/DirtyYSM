@@ -46,6 +46,11 @@ public class CompositeAnimationController<T extends AnimatableEntity<?>> impleme
     }
 
     @Override
+    public boolean isAnimationPlaying(String name) {
+        return activeController.isAnimationPlaying(name);
+    }
+
+    @Override
     public String getCurrentAnimation() {
         if (this.initialized) {
             return this.animationRuntime.isBuiltinAnimation() ? "[builtin] " + this.controller.getCurrentAnimation() : this.animationRuntime.getCurrentAnimation();

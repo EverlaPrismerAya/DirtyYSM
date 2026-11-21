@@ -73,6 +73,14 @@ public class AnimationProcessor<TEntity extends Entity> {
         this.animatable = animatable;
     }
 
+    /** Read the same scoped variables/structs used by v.* and variable.* in Molang. */
+    public double physicsVariable(String path) {
+        String[] parts=path.split("\\.");
+        Object value=animationStorage.getScoped(StringPool.computeIfAbsent(parts[1]));
+        for(int i=2;i<parts.length;i++) value=value instanceof Struct struct?struct.getProperty(StringPool.computeIfAbsent(parts[i])):null;
+        return com.elfmcys.yesstevemodel.molang.runtime.binding.ValueConversions.asFloat(value);
+    }
+
     public void tickAnimation(AnimationEvent<AnimatableEntity<TEntity>> event, AnimationContext<?> context, boolean z, boolean z2) {
         context.setStorage(this.animationStorage);
         context.setRandom(this.random);

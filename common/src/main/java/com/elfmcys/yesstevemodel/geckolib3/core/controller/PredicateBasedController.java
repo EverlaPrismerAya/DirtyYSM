@@ -140,6 +140,13 @@ public class PredicateBasedController<T extends AnimatableEntity<?>> implements 
         return "Coded -> " + this.transitionInterpolator.getCurrentAnimation().animationName;
     }
 
+    @Override
+    public boolean isAnimationPlaying(String name) {
+        return transitionInterpolator.getAnimationState()!=AnimationState.IDLE
+                && transitionInterpolator.getCurrentAnimation()!=null
+                && name.equals(transitionInterpolator.getCurrentAnimation().animationName);
+    }
+
     public void setAnimation(String animationName) {
         this.transitionInterpolator.setAnimation(animationName, null);
     }

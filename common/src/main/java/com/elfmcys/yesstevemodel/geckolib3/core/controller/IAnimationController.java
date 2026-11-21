@@ -16,6 +16,8 @@ public interface IAnimationController<T extends AnimatableEntity<?>> {
 
     String getCurrentAnimation();
 
+    default boolean isAnimationPlaying(String name) { return false; }
+
     void init(List<BoneTopLevelSnapshot> list, Object2ReferenceMap<String, List<IValue>> object2ReferenceMap);
 
     void process(AnimationEvent<T> event, ExpressionEvaluator<AnimationContext<?>> evaluator, boolean z);
